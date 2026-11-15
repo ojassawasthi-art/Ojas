@@ -16,23 +16,27 @@ export interface ApiResponse extends ServerResponse {
   send?: (body: string) => void;
 }
 
-const SUPABASE_URL =
-  process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
-const SUPABASE_ANON_KEY =
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-  process.env.VITE_SUPABASE_ANON_KEY ||
-  '';
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
+const SUPABASE_URL = (
+  process.env.VITE_SUPABASE_URL ||
+  process.env.SUPABASE_URL ||
+  ''
+).trim();
+const SUPABASE_SERVICE_ROLE_KEY = (
+  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+).trim();
+const RESEND_API_KEY = (process.env.RESEND_API_KEY || '').trim();
 
 export const ADMIN_EMAIL = (
-  process.env.ADMIN_EMAIL || 'ojassawasthi@gmail.com'
-).toLowerCase();
+  process.env.ADMIN_EMAIL ||
+  process.env.VITE_ADMIN_EMAIL ||
+  'ojassawasthi@gmail.com'
+)
+  .trim()
+  .toLowerCase();
 
 export const isSupabaseAdminReady = Boolean(
   SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY,
 );
-export const isSupabasePublicReady = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 
 export const supabaseAdmin: SupabaseClient | null = isSupabaseAdminReady
   ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
@@ -40,7 +44,10 @@ export const supabaseAdmin: SupabaseClient | null = isSupabaseAdminReady
     })
   : null;
 
-export const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
+// Skip Resend initialization cleanly if RESEND_API_KEY is empty
+export const resend: Resend | null = RESEND_API_KEY
+  ? new Resend(RESEND_API_KEY)
+  : null;
 
 export function sendJson(res: ApiResponse, statusCode: number, data: unknown) {
   res.statusCode = statusCode;
@@ -94,18 +101,6 @@ export async function parseJsonBody<T = Record<string, unknown>>(
   });
 }
 
-export function getQueryParam(req: ApiRequest, name: string): string {
-  const fromQuery = req.query?.[name];
-  if (typeof fromQuery === 'string') return fromQuery;
-  if (Array.isArray(fromQuery) && fromQuery[0]) return fromQuery[0];
-
-  if (req.url) {
-    const parts = req.url.split('?')[0].split('/').filter(Boolean);
-    return parts[parts.length - 1] || '';
-  }
-  return '';
-}
-
 export function getClientIp(req: ApiRequest): string {
   const forwarded = req.headers['x-forwarded-for'];
   if (typeof forwarded === 'string') {
@@ -126,12 +121,11 @@ export function hashIp(ip: string): string {
 }
 
 export function getBaseUrl(req: ApiRequest): string {
-  const configured =
-    process.env.NEXT_PUBLIC_SITE_URL ||
+  const configured = (
     process.env.VITE_SITE_URL ||
-    (process.env.APP_URL && process.env.APP_URL !== 'MY_APP_URL'
-      ? process.env.APP_URL
-      : '');
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    ''
+  ).trim();
   if (configured) {
     return configured.replace(/\/$/, '');
   }
@@ -213,4 +207,12 @@ export async function getSiteSettings(): Promise<SiteSettingsMap> {
     }
   }
   return siteContent.fallbackSettings;
+}
+
+export function escapeXml(input: string): string {
+  return input
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }

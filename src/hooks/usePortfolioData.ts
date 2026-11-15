@@ -1,5 +1,6 @@
 import {useCallback, useEffect, useState} from 'react';
 import {siteContent} from '../content/site';
+import {isSupabaseConfigured, supabase} from '../lib/supabase';
 import type {Project, SiteSettingsMap, Testimonial} from '../types/database';
 
 interface PortfolioDataState {
@@ -10,6 +11,12 @@ interface PortfolioDataState {
   error: string | null;
   supabaseConnected: boolean;
   refresh: () => Promise<void>;
+}
+
+async function safeJson(res: Response) {
+  const ct = res.headers.get('content-type') || '';
+  if (!res.ok || !ct.includes('application/json')) return null;
+  return res.json();
 }
 
 export function usePortfolioData(): PortfolioDataState {
@@ -26,34 +33,63 @@ export function usePortfolioData(): PortfolioDataState {
     try {
       setError(null);
       const [projRes, testRes, setRes] = await Promise.all([
-        fetch('/api/projects'),
-        fetch('/api/testimonials'),
-        fetch('/api/settings'),
+        fetch('/api/projects').catch(() => null),
+        fetch('/api/testimonials').catch(() => null),
+        fetch('/api/settings').catch(() => null),
       ]);
 
-      if (projRes.ok) {
-        const data = await projRes.json();
-        if (Array.isArray(data.projects)) {
-          setProjects(data.projects);
+      const projData = projRes ? await safeJson(projRes) : null;
+      const testData = testRes ? await safeJson(testRes) : null;
+      const setData = setRes ? await safeJson(setRes) : null;
+
+      if (projData && Array.isArray(projData.projects)) {
+        setProjects(projData.projects);
+        setSupabaseConnected(Boolean(projData.supabaseConnected));
+      } else if (isSupabaseConfigured && supabase) {
+        // Direct client-side Supabase fallback when running Vite without Express/API
+        const {data} = await supabase
+          .from('projects')
+          .select('*')
+          .eq('published', true)
+          .order('sort_order', {ascending: true});
+        if (Array.isArray(data) && data.length > 0) {
+          setProjects(data as Project[]);
+          setSupabaseConnected(true);
         }
-        setSupabaseConnected(Boolean(data.supabaseConnected));
       }
 
-      if (testRes.ok) {
-        const data = await testRes.json();
-        if (Array.isArray(data.testimonials)) {
-          setTestimonials(data.testimonials);
+      if (testData && Array.isArray(testData.testimonials)) {
+        setTestimonials(testData.testimonials);
+      } else if (isSupabaseConfigured && supabase) {
+        const {data} = await supabase
+          .from('testimonials')
+          .select('*')
+          .eq('approved', true)
+          .order('created_at', {ascending: false});
+        if (Array.isArray(data)) {
+          setTestimonials(data as Testimonial[]);
         }
       }
 
-      if (setRes.ok) {
-        const data = await setRes.json();
-        if (data.settings) {
-          setSettings(data.settings);
+      if (setData && setData.settings) {
+        setSettings(setData.settings);
+      } else if (isSupabaseConfigured && supabase) {
+        const {data} = await supabase.from('site_settings').select('key, value');
+        if (Array.isArray(data) && data.length > 0) {
+          const map: SiteSettingsMap = structuredClone(siteContent.fallbackSettings);
+          for (const row of data) {
+            if (row.key === 'availability' && row.value) {
+              map.availability = row.value as SiteSettingsMap['availability'];
+            }
+            if (row.key === 'hero' && row.value) {
+              map.hero = row.value as SiteSettingsMap['hero'];
+            }
+          }
+          setSettings(map);
         }
       }
     } catch {
-      setError('Unable to sync live updates; displaying saved portfolio content.');
+      setError('Using saved portfolio content.');
     } finally {
       setLoading(false);
     }

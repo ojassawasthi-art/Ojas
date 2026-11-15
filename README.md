@@ -21,33 +21,48 @@ Personal portfolio website for **Ojas Awasthi** (Web Developer, Digital Marketer
    - In **Authentication → URL Configuration**, add your production domain and `http://localhost:3000/admin` to **Redirect URLs** so magic links work smoothly.
 
 3. **Configure environment variables**
-   Copy `.env.example` to `.env` (for local development) and add the same variables in Vercel:
-   - `VITE_SUPABASE_URL` & `NEXT_PUBLIC_SUPABASE_URL`
-   - `VITE_SUPABASE_ANON_KEY` & `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `SUPABASE_SERVICE_ROLE_KEY` (server-only — never expose to the browser)
-   - `RESEND_API_KEY` (from [resend.com](https://resend.com))
-   - `ADMIN_EMAIL=ojassawasthi@gmail.com`
-   - `VITE_ADMIN_EMAIL=ojassawasthi@gmail.com`
-   - `NEXT_PUBLIC_SITE_URL` & `VITE_SITE_URL` (e.g. `https://ojasawasthi.com`)
-   - `VITE_GA_MEASUREMENT_ID` (optional GA4 ID)
-
+   Copy `.env.example` to `.env` for local development (`.env` is gitignored).
    *Note: If Supabase keys are missing, the site still builds and runs cleanly using the seed content in `src/content/site.ts`, and forms fall back cleanly to direct email contact.*
 
 4. **Run locally**
    ```bash
+   # Full-stack local dev (Vite + Express API)
    npm run dev
+
+   # Frontend SPA only (without Express server)
+   npm run dev:spa
    ```
 
 ---
 
-## 2. Vercel Deployment Steps
+## Deploy on Vercel
 
-The project includes `vercel.json` and Vercel serverless functions inside `/api` (`/api/projects`, `/api/contact`, `/api/newsletter`, `/api/testimonials`, `/api/settings`, `/api/analytics`, `/api/robots`, `/api/sitemap`, and `/api/admin/*`), with rewrites for `/robots.txt`, `/sitemap.xml`, and SPA client routes.
+This project is built for Vercel's **Hobby (free)** plan:
+- **Build & Output**: Uses `vercel.json` (`framework: "vite"`, `buildCommand: "npm run build"`, `outputDirectory: "dist"`).
+- **Single Serverless Function**: All routes (`/api/projects`, `/api/contact`, `/api/newsletter`, `/api/testimonials`, `/api/settings`, `/api/analytics`, `/robots.txt`, `/sitemap.xml`, and `/api/admin/*`) are merged into one serverless handler (`api/index.ts`) via `vercel.json` rewrites, keeping the deployment well under Vercel Hobby's 12-function limit.
+- **TypeScript Isolation**: `api/tsconfig.json` uses `"types": ["node"]` with zero Vite references, while `src/tsconfig.json` keeps `"types": ["vite/client"]`.
 
-1. Push the repository to GitHub, GitLab, or Bitbucket.
-2. Import the repository into [Vercel](https://vercel.com) (Framework Preset: **Vite**, Build Command: `npm run build`, Output Directory: `dist`).
-3. Add all environment variables from `.env.example` in **Project Settings → Environment Variables**.
-4. Connect your custom domain (for example `ojasawasthi.com`) under **Project Settings → Domains** and enable HTTPS redirect.
+### Environment Variables to Set in Vercel
+Go to **Vercel → Project Settings → Environment Variables** and add:
+
+**Frontend variables (safe for browser bundle):**
+- `VITE_SUPABASE_URL` — Your Supabase Project URL (`https://<ref>.supabase.co`)
+- `VITE_SUPABASE_ANON_KEY` — Your Supabase `anon` public key
+- `VITE_ADMIN_EMAIL` — `ojassawasthi@gmail.com`
+- `VITE_SITE_URL` — Your production URL (e.g. `https://ojasawasthi.com` or `https://your-app.vercel.app`)
+- `VITE_GA_MEASUREMENT_ID` — *(Optional)* Google Analytics 4 ID (`G-...`); leave empty to skip GA4
+
+**Server-only variables (`/api` serverless functions only):**
+- `SUPABASE_SERVICE_ROLE_KEY` — Your Supabase `service_role` secret key (never prefix with `VITE_`)
+- `ADMIN_EMAIL` — `ojassawasthi@gmail.com`
+- `RESEND_API_KEY` — *(Optional)* Your Resend API key (`re_...`); leave empty to skip email sending without crashing
+
+### Deployment Steps
+1. Push the repository (including `package-lock.json`, without `.env` or `bun.lock`) to GitHub, GitLab, or Bitbucket.
+2. Import the repository into [Vercel](https://vercel.com) (Framework Preset: **Vite**).
+3. Add the environment variables above and deploy.
+4. Add your production URL and `/admin` path to **Supabase → Authentication → URL Configuration → Redirect URLs**.
+5. Connect your custom domain (e.g. `ojasawasthi.com`) under **Project Settings → Domains**.
 
 ---
 

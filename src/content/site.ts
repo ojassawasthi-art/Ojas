@@ -320,9 +320,7 @@ export const siteContent = {
     defaultTitle: 'Ojas Awasthi | Web Developer, Digital Marketer & Author in Lucknow',
     defaultDescription:
       'Ojas Awasthi is a web developer, digital marketer, and published author based in Lucknow, India, building fast websites and practical digital strategies.',
-    siteUrl:
-      (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SITE_URL) ||
-      'https://ojasawasthi.com',
+    siteUrl: 'https://ojasawasthi.com',
   },
 
   fallbackSettings: {

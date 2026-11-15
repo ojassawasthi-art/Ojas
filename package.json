@@ -5,17 +5,19 @@
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
+    "dev:spa": "vite --port=3000 --host=0.0.0.0",
     "build": "vite build",
     "start": "tsx server.ts",
-    "preview": "vite preview",
+    "preview": "vite preview --port=3000 --host=0.0.0.0",
     "clean": "rm -rf dist server.js",
-    "lint": "tsc --noEmit"
+    "lint": "tsc -p src/tsconfig.json --noEmit && tsc -p api/tsconfig.json --noEmit"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
     "@hookform/resolvers": "^7.0.6",
     "@supabase/supabase-js": "^2.119.0",
     "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^6.1.1",
     "dotenv": "^17.2.3",
     "express": "^4.21.2",
@@ -27,18 +29,17 @@
     "react-dom": "^19.0.1",
     "react-hook-form": "^7.92.0",
     "resend": "^6.38.1",
+    "typescript": "5.6.3",
     "vite": "^8.3.0",
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@types/node": "^22.14.0",
+    "@types/express": "^4.17.21",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "autoprefixer": "^10.4.21",
-    "esbuild": "^0.25.0",
+    "esbuild": "^0.28.0",
     "tailwindcss": "^4.3.3",
-    "tsx": "^4.21.0",
-    "typescript": "^7.0.2",
-    "@types/express": "^4.17.21"
+    "tsx": "^4.21.0"
   }
 }
