@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ojas Awasthi | Web Developer, Digital Marketer &amp; Author in Lucknow</title>
+    <meta
+      name="description"
+      content="Ojas Awasthi is a web developer, digital marketer, and published author based in Lucknow, India, building fast websites and practical digital strategies."
+    />
+    <meta name="author" content="Ojas Awasthi" />
+    <meta name="robots" content="index, follow" />
+    <!-- SEO_HEAD_LINKS -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#FAFAF8" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0A0A0A" media="(prefers-color-scheme: dark)" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Ojas Awasthi" />
+    <meta property="og:title" content="Ojas Awasthi | Web Developer, Digital Marketer &amp; Author in Lucknow" />
+    <meta
+      property="og:description"
+      content="Ojas Awasthi is a web developer, digital marketer, and published author based in Lucknow, India, building fast websites and practical digital strategies."
+    />
+    <meta property="og:locale" content="en_IN" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Ojas Awasthi | Web Developer, Digital Marketer &amp; Author in Lucknow" />
+    <meta
+      name="twitter:description"
+      content="Ojas Awasthi is a web developer, digital marketer, and published author based in Lucknow, India, building fast websites and practical digital strategies."
+    />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem('oa_theme');
+          var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          if (stored === 'dark' || (!stored && prefersDark)) {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body class="bg-[#FAFAF8] text-[#0A0A0A] dark:bg-[#0A0A0A] dark:text-[#F5F5F2] antialiased selection:bg-[#C8A97E]/30">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

@@ -1,0 +1,18 @@
+{
+  "name": "Ojas Awasthi — Web Developer & Digital Strategist",
+  "short_name": "Ojas Awasthi",
+  "description": "Personal portfolio of Ojas Awasthi, a web developer, digital marketer, and published author in Lucknow.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAFAF8",
+  "theme_color": "#0A0A0A",
+  "lang": "en-IN",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

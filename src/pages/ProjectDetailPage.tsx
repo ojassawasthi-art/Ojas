@@ -1,0 +1,283 @@
+import {ArrowLeft, ArrowRight, ArrowUpRight} from 'lucide-react';
+import {ProjectThumbnail} from '../components/ProjectThumbnail';
+import {SeoHead} from '../components/SeoHead';
+import {siteContent} from '../content/site';
+import {useRouter} from '../context/RouterContext';
+import {extractDomain, getProjectThumbnailUrl} from '../lib/screenshot';
+import {
+  buildBreadcrumbSchema,
+  buildProjectSchema,
+  getCanonicalBaseUrl,
+} from '../lib/seo';
+import type {Project} from '../types/database';
+
+interface ProjectDetailPageProps {
+  slug: string;
+  projects: Project[];
+  loading: boolean;
+}
+
+export function ProjectDetailPage({
+  slug,
+  projects,
+  loading,
+}: ProjectDetailPageProps) {
+  const {navigate} = useRouter();
+  const published = projects.filter((p) => p.published);
+  const currentIndex = published.findIndex((p) => p.slug === slug);
+  const project = currentIndex >= 0 ? published[currentIndex] : null;
+  const nextProject =
+    published.length > 1 && currentIndex >= 0
+      ? published[(currentIndex + 1) % published.length]
+      : null;
+
+  if (loading && !project) {
+    return (
+      <section className="pt-32 pb-28">
+        <div className="mx-auto max-w-[1200px] px-6">
+          <div className="h-96 animate-pulse rounded-2xl border border-[var(--border)] bg-[var(--surface)]" />
+        </div>
+      </section>
+    );
+  }
+
+  if (!project) {
+    return (
+      <section className="pt-36 pb-28">
+        <div className="mx-auto max-w-[1200px] px-6 text-center">
+          <h1 className="font-serif-display text-5xl text-[var(--text)]">
+            Project not found
+          </h1>
+          <p className="mt-4 text-sm text-[var(--muted)]">
+            This case study may have been unpublished or moved.
+          </p>
+          <button
+            type="button"
+            onClick={() => navigate('/work')}
+            className="mt-8 rounded-xl border border-[var(--border)] px-5 py-2.5 text-sm font-medium text-[var(--text)]"
+          >
+            Return to Work
+          </button>
+        </div>
+      </section>
+    );
+  }
+
+  const baseUrl = getCanonicalBaseUrl();
+  const domain = extractDomain(project.live_url);
+  const autoPreview = getProjectThumbnailUrl(
+    project.thumbnail_url,
+    project.live_url,
+  );
+  const galleryImages =
+    project.images && project.images.length > 0
+      ? project.images
+      : autoPreview
+        ? [autoPreview]
+        : [];
+
+  return (
+    <>
+      <SeoHead
+        title={`${project.title} — Case Study | ${siteContent.profile.name}`}
+        description={project.description}
+        path={`/work/${project.slug}`}
+        schemas={[
+          buildProjectSchema(project, baseUrl),
+          buildBreadcrumbSchema(
+            [
+              {name: 'Home', path: '/'},
+              {name: 'Work', path: '/work'},
+              {name: project.title, path: `/work/${project.slug}`},
+            ],
+            baseUrl,
+          ),
+        ]}
+      />
+
+      <article className="pt-32 pb-28">
+        <div className="mx-auto max-w-[1200px] px-6">
+          <a
+            href="/work"
+            onClick={(e) => {
+              e.preventDefault();
+              navigate('/work');
+            }}
+            className="inline-flex items-center gap-2 text-xs font-medium text-[var(--muted)] transition-colors hover:text-[var(--text)]"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
+            <span>Back to all work</span>
+          </a>
+
+          <header className="mt-8 border-b border-[var(--border)] pb-10">
+            <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--muted)]">
+              <span>{project.category}</span>
+              <span aria-hidden="true">·</span>
+              <span className="font-mono-tabular">{project.year}</span>
+              {project.status_tag && (
+                <>
+                  <span aria-hidden="true">·</span>
+                  <span className="font-medium text-[var(--accent-text)]">
+                    {project.status_tag}
+                  </span>
+                </>
+              )}
+            </div>
+
+            <h1 className="mt-3 font-serif-display text-5xl tracking-tight text-[var(--text)] sm:text-7xl">
+              {project.title}
+            </h1>
+
+            <p className="mt-5 max-w-2xl text-lg leading-relaxed text-[var(--muted)]">
+              {project.description}
+            </p>
+
+            {(project.live_url || project.github_url) && (
+              <div className="mt-8 flex flex-wrap gap-4">
+                {project.live_url && (
+                  <a
+                    href={project.live_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group inline-flex items-center gap-2 rounded-xl bg-[#0A0A0A] px-5 py-3 text-sm font-medium text-[#FAFAF8] transition-opacity hover:opacity-90 dark:bg-[#F5F5F2] dark:text-[#0A0A0A]"
+                  >
+                    <span>Visit live site</span>
+                    <ArrowUpRight
+                      aria-hidden="true"
+                      className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                    />
+                  </a>
+                )}
+
+                {project.github_url && (
+                  <a
+                    href={project.github_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group inline-flex items-center gap-2 rounded-xl border border-[var(--border)] px-5 py-3 text-sm font-medium text-[var(--text)] transition-colors hover:border-[var(--accent)]"
+                  >
+                    <span>Source repository</span>
+                    <ArrowUpRight
+                      aria-hidden="true"
+                      className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                    />
+                  </a>
+                )}
+              </div>
+            )}
+          </header>
+
+          {/* Metadata grid — hides empty fields automatically */}
+          {(project.role ||
+            (project.tech_stack && project.tech_stack.length > 0) ||
+            project.long_description) && (
+            <div className="mt-12 grid grid-cols-1 gap-10 lg:grid-cols-12">
+              {project.long_description && (
+                <div className="lg:col-span-8">
+                  <h2 className="font-serif-display text-3xl text-[var(--text)]">
+                    Overview
+                  </h2>
+                  <p className="mt-4 text-base leading-relaxed whitespace-pre-line text-[var(--muted)]">
+                    {project.long_description}
+                  </p>
+                </div>
+              )}
+
+              {(project.role ||
+                (project.tech_stack && project.tech_stack.length > 0)) && (
+                <aside className="space-y-6 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-7 lg:col-span-4">
+                  {project.role && (
+                    <div>
+                      <p className="text-xs text-[var(--muted)]">Role</p>
+                      <p className="mt-1 text-sm font-medium text-[var(--text)]">
+                        {project.role}
+                      </p>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-xs text-[var(--muted)]">Year</p>
+                    <p className="font-mono-tabular mt-1 text-sm text-[var(--text)]">
+                      {project.year}
+                    </p>
+                  </div>
+                  {project.tech_stack && project.tech_stack.length > 0 && (
+                    <div>
+                      <p className="text-xs text-[var(--muted)]">
+                        Stack &amp; Focus
+                      </p>
+                      <p className="mt-1 text-sm leading-relaxed text-[var(--text)]">
+                        {project.tech_stack.join(' · ')}
+                      </p>
+                    </div>
+                  )}
+                </aside>
+              )}
+            </div>
+          )}
+
+          {/* Browser-window mockup showcase */}
+          <div className="mt-14 space-y-8">
+            <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-sm">
+              <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
+                <div className="flex items-center gap-1.5" aria-hidden="true">
+                  <span className="h-2.5 w-2.5 rounded-full bg-[var(--border)]" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-[var(--border)]" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-[var(--border)]" />
+                </div>
+                <span className="font-mono-tabular text-[11px] text-[var(--muted)]">
+                  {domain || project.slug}
+                </span>
+                <span className="w-10" />
+              </div>
+
+              <ProjectThumbnail
+                project={project}
+                className="aspect-[16/9] w-full"
+              />
+            </div>
+
+            {galleryImages.length > 1 && (
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                {galleryImages.slice(1).map((imgUrl, idx) => (
+                  <div
+                    key={`${imgUrl}-${idx}`}
+                    className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)]"
+                  >
+                    <img
+                      src={imgUrl}
+                      alt={`${project.title} view ${idx + 2}`}
+                      referrerPolicy="no-referrer"
+                      className="aspect-[16/10] w-full object-cover"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {nextProject && (
+            <div className="mt-20 border-t border-[var(--border)] pt-10">
+              <p className="text-xs text-[var(--muted)]">Next project</p>
+              <a
+                href={`/work/${nextProject.slug}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate(`/work/${nextProject.slug}`);
+                }}
+                className="group mt-2 flex items-center justify-between gap-4"
+              >
+                <span className="font-serif-display text-3xl text-[var(--text)] transition-colors group-hover:text-[var(--accent-text)] sm:text-5xl">
+                  {nextProject.title}
+                </span>
+                <ArrowRight
+                  aria-hidden="true"
+                  className="h-6 w-6 text-[var(--text)] transition-transform duration-200 group-hover:translate-x-1"
+                />
+              </a>
+            </div>
+          )}
+        </div>
+      </article>
+    </>
+  );
+}
