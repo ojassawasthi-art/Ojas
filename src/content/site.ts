@@ -319,8 +319,8 @@ export const siteContent = {
   seo: {
     defaultTitle: 'Ojas Awasthi | Web Developer, Digital Marketer & Author in Lucknow',
     defaultDescription:
-      'Ojas Awasthi is a web developer, digital marketer, and published author based in Lucknow, India, building fast websites and practical digital strategies.',
-    siteUrl: 'https://ojasawasthi.com',
+      'Ojas Awasthi is a web developer, digital marketer, and published author in Lucknow, India, building fast websites and practical digital growth strategies.',
+    siteUrl: 'https://ojasawasthii.vercel.app',
   },
 
   fallbackSettings: {
@@ -384,7 +384,7 @@ export const siteContent = {
       slug: 'who-is-ojas-awasthi',
       title: 'Who is Ojas Awasthi?',
       description:
-        'An overview of Ojas Awasthi—web developer, digital marketer, founder of The Vaxn Store, NISM-certified investor, and published author in Lucknow.',
+        'An overview of Ojas Awasthi in Lucknow, India: web developer, digital marketer, founder of The Vaxn Store, NISM-certified investor, and published author.',
       publishedAt: '2026-08-15',
       readingTime: '3 min read',
       sections: [

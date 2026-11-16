@@ -9,7 +9,8 @@ export function NotFoundPage() {
     <>
       <SeoHead
         title={`Page Not Found | ${siteContent.profile.name}`}
-        description="The requested page could not be found."
+        description="The requested page could not be found on Ojas Awasthi portfolio."
+        path="/404"
         noIndex
       />
 

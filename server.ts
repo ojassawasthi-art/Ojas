@@ -7,6 +7,7 @@ import {Resend} from 'resend';
 import {createServer as createViteServer} from 'vite';
 import {z} from 'zod';
 import {siteContent} from './src/content/site';
+import {buildPageSeoData, injectSeoIntoHtml} from './src/lib/routeSeo';
 import type {
   ContactMessage,
   PageView,
@@ -18,12 +19,18 @@ import type {
 const PORT = Number(process.env.PORT) || 3000;
 const isProd = process.env.NODE_ENV === 'production';
 
-const SUPABASE_URL =
-  process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
+const SUPABASE_URL = (
+  process.env.VITE_SUPABASE_URL ||
+  process.env.NEXT_PUBLIC_SUPABASE_URL ||
+  'https://hdryciyvkhozomertslx.supabase.co'
+)
+  .trim()
+  .replace(/\/rest\/v1\/?$/i, '')
+  .replace(/\/+$/, '');
 const SUPABASE_ANON_KEY =
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
   process.env.VITE_SUPABASE_ANON_KEY ||
-  '';
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+  'sb_publishable_y2bqryW00-NO-JAnrOXKTw_Qa4pYP1H';
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
 const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || 'ojassawasthi@gmail.com').toLowerCase();
@@ -71,14 +78,12 @@ function getClientIp(req: Request): string {
   return req.socket.remoteAddress || 'unknown';
 }
 
-function getBaseUrl(req: Request): string {
-  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, '');
-  if (process.env.APP_URL && process.env.APP_URL !== 'MY_APP_URL') {
-    return process.env.APP_URL.replace(/\/$/, '');
-  }
-  const proto = req.headers['x-forwarded-proto'] || req.protocol || 'http';
-  const host = req.headers.host || `localhost:${PORT}`;
-  return `${proto}://${host}`;
+function getBaseUrl(_req: Request): string {
+  const configured =
+    process.env.VITE_SITE_URL ||
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    'https://ojasawasthii.vercel.app';
+  return configured.trim().replace(/\/+$/, '');
 }
 
 async function verifyAdmin(req: Request, res: Response, next: NextFunction) {
@@ -170,65 +175,7 @@ function escapeHtml(input: string): string {
     .replace(/"/g, '&quot;');
 }
 
-async function buildRouteMeta(urlPath: string, baseUrl: string) {
-  let title = siteContent.seo.defaultTitle;
-  let description = siteContent.seo.defaultDescription;
-  const cleanPath = urlPath.split('?')[0] || '/';
-
-  if (cleanPath === '/work') {
-    title = `Work & Case Studies | ${siteContent.profile.name}`;
-    description = `Web development projects and e-commerce builds by ${siteContent.profile.name} in Lucknow, India.`;
-  } else if (cleanPath.startsWith('/work/')) {
-    const slug = cleanPath.replace('/work/', '').replace(/\/$/, '');
-    const projects = await getPublishedProjects();
-    const match = projects.find((p) => p.slug === slug);
-    if (match) {
-      title = `${match.title} — Case Study | ${siteContent.profile.name}`;
-      description = match.description;
-    }
-  } else if (cleanPath === '/about') {
-    title = `About ${siteContent.profile.name} | Web Developer & Author in Lucknow`;
-    description = `Learn about ${siteContent.profile.name}: web development, The Vaxn Store, University of Lucknow B.Com, CS preparation, books, and certifications.`;
-  } else if (cleanPath === '/books') {
-    title = `Books by ${siteContent.profile.name}`;
-    description = `Published books by ${siteContent.profile.name}: Mastering the Art of Manipulation and The Echoes of Love on Amazon and Google Play Books.`;
-  } else if (cleanPath === '/contact') {
-    title = `Contact ${siteContent.profile.name} | Lucknow, India`;
-    description = `Contact ${siteContent.profile.name} for web development, SEO, or digital strategy inquiries at ${siteContent.contact.email}.`;
-  } else if (cleanPath === '/blog') {
-    title = `Articles | ${siteContent.profile.name}`;
-    description = `Notes and articles by ${siteContent.profile.name} on web development, digital strategy, and background.`;
-  } else if (cleanPath.startsWith('/blog/')) {
-    const slug = cleanPath.replace('/blog/', '').replace(/\/$/, '');
-    const post = siteContent.blogPosts.find((b) => b.slug === slug);
-    if (post) {
-      title = `${post.title} | ${siteContent.profile.name}`;
-      description = post.description;
-    }
-  }
-
-  const canonical = `${baseUrl}${cleanPath === '/' ? '' : cleanPath}`;
-  const personJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Person',
-    name: siteContent.profile.name,
-    alternateName: siteContent.profile.alternateName,
-    jobTitle: 'Web Developer, Digital Marketer & Published Author',
-    url: baseUrl,
-    email: `mailto:${siteContent.contact.email}`,
-    address: {
-      '@type': 'PostalAddress',
-      addressLocality: 'Lucknow',
-      addressRegion: 'Uttar Pradesh',
-      addressCountry: 'India',
-    },
-    sameAs: siteContent.contact.socials
-      .filter((s) => s.url.startsWith('http'))
-      .map((s) => s.url),
-  };
-
-  return {title, description, canonical, personJsonLd};
-}
+/* Route SEO metadata and JSON-LD builders live in src/lib/routeSeo.ts */
 
 async function startServer() {
   const app = express();
@@ -797,28 +744,44 @@ async function startServer() {
   app.get('/sitemap.xml', async (req, res) => {
     const baseUrl = getBaseUrl(req);
     const projects = await getPublishedProjects();
-    const staticRoutes = [
-      '/',
-      '/work',
-      '/about',
-      '/books',
-      '/contact',
-      '/blog',
-      ...siteContent.blogPosts.map((b) => `/blog/${b.slug}`),
-    ];
-    const projectRoutes = projects.map((p) => `/work/${p.slug}`);
-    const allRoutes = [...staticRoutes, ...projectRoutes];
     const nowIso = new Date().toISOString();
+
+    const entries = [
+      {loc: '/', lastmod: nowIso, changefreq: 'weekly', priority: '1.0'},
+      {loc: '/work', lastmod: nowIso, changefreq: 'weekly', priority: '0.9'},
+      {loc: '/books', lastmod: nowIso, changefreq: 'monthly', priority: '0.8'},
+      {loc: '/about', lastmod: nowIso, changefreq: 'monthly', priority: '0.8'},
+      {loc: '/contact', lastmod: nowIso, changefreq: 'monthly', priority: '0.7'},
+      {loc: '/blog', lastmod: nowIso, changefreq: 'monthly', priority: '0.7'},
+      ...siteContent.blogPosts.map((b) => {
+        const parsed = new Date(b.publishedAt);
+        return {
+          loc: `/blog/${b.slug}`,
+          lastmod: Number.isNaN(parsed.getTime()) ? nowIso : parsed.toISOString(),
+          changefreq: 'monthly',
+          priority: '0.7',
+        };
+      }),
+      ...projects.map((p) => {
+        const parsed = p.created_at ? new Date(p.created_at) : new Date(nowIso);
+        return {
+          loc: `/work/${p.slug}`,
+          lastmod: Number.isNaN(parsed.getTime()) ? nowIso : parsed.toISOString(),
+          changefreq: 'monthly',
+          priority: '0.8',
+        };
+      }),
+    ];
 
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${allRoutes
+${entries
   .map(
-    (route) => `  <url>
-    <loc>${escapeHtml(`${baseUrl}${route === '/' ? '' : route}`)}</loc>
-    <lastmod>${nowIso}</lastmod>
-    <changefreq>${route === '/' ? 'weekly' : 'monthly'}</changefreq>
-    <priority>${route === '/' ? '1.0' : '0.8'}</priority>
+    (entry) => `  <url>
+    <loc>${escapeHtml(`${baseUrl}${entry.loc === '/' ? '' : entry.loc}`)}</loc>
+    <lastmod>${entry.lastmod}</lastmod>
+    <changefreq>${entry.changefreq}</changefreq>
+    <priority>${entry.priority}</priority>
   </url>`,
   )
   .join('\n')}
@@ -832,7 +795,7 @@ ${allRoutes
     const baseUrl = getBaseUrl(req);
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
     res.send(
-      `User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api/\n\nSitemap: ${baseUrl}/sitemap.xml\n`,
+      `User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api\n\nSitemap: ${baseUrl}/sitemap.xml\n`,
     );
   });
 
@@ -842,7 +805,7 @@ ${allRoutes
   if (!isProd) {
     const vite = await createViteServer({
       server: {middlewareMode: true},
-      appType: 'spa',
+      appType: 'custom',
     });
     app.use(vite.middlewares);
 
@@ -855,19 +818,11 @@ ${allRoutes
         );
         const transformed = await vite.transformIndexHtml(url, rawHtml);
         const baseUrl = getBaseUrl(req);
-        const meta = await buildRouteMeta(url, baseUrl);
-        const injected = transformed
-          .replace(/<title>.*?<\/title>/, `<title>${escapeHtml(meta.title)}</title>`)
-          .replace(
-            /<meta\s+name="description"[\s\S]*?\/>/,
-            `<meta name="description" content="${escapeHtml(meta.description)}" />`,
-          )
-          .replace(
-            '<link rel="alternate" hreflang="en-IN" href="/" />',
-            `<link rel="canonical" href="${escapeHtml(meta.canonical)}" />\n    <link rel="alternate" hreflang="en-IN" href="${escapeHtml(meta.canonical)}" />\n    <script type="application/ld+json">${JSON.stringify(meta.personJsonLd)}</script>`,
-          );
+        const projects = await getPublishedProjects();
+        const seo = buildPageSeoData(url, baseUrl, projects);
+        const injected = injectSeoIntoHtml(transformed, seo);
 
-        res.status(200).set({'Content-Type': 'text/html'}).end(injected);
+        res.status(seo.statusCode).set({'Content-Type': 'text/html; charset=utf-8'}).end(injected);
       } catch (err) {
         vite.ssrFixStacktrace(err as Error);
         next(err);
@@ -880,18 +835,10 @@ ${allRoutes
     app.use('*', async (req, res) => {
       const rawHtml = fs.readFileSync(path.join(distDir, 'index.html'), 'utf-8');
       const baseUrl = getBaseUrl(req);
-      const meta = await buildRouteMeta(req.originalUrl, baseUrl);
-      const injected = rawHtml
-        .replace(/<title>.*?<\/title>/, `<title>${escapeHtml(meta.title)}</title>`)
-        .replace(
-          /<meta\s+name="description"[\s\S]*?\/>/,
-          `<meta name="description" content="${escapeHtml(meta.description)}" />`,
-        )
-        .replace(
-          '<!-- SEO_HEAD_LINKS -->',
-          `<link rel="canonical" href="${escapeHtml(meta.canonical)}" />\n    <link rel="alternate" hreflang="en-IN" href="${escapeHtml(meta.canonical)}" />\n    <script type="application/ld+json">${JSON.stringify(meta.personJsonLd)}</script>`,
-        );
-      res.status(200).set({'Content-Type': 'text/html'}).end(injected);
+      const projects = await getPublishedProjects();
+      const seo = buildPageSeoData(req.originalUrl, baseUrl, projects);
+      const injected = injectSeoIntoHtml(rawHtml, seo);
+      res.status(seo.statusCode).set({'Content-Type': 'text/html; charset=utf-8'}).end(injected);
     });
   }
 

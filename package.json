@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx server.ts",
     "dev:spa": "vite --port=3000 --host=0.0.0.0",
-    "build": "vite build",
+    "build": "vite build && tsx scripts/prerender.ts",
     "start": "tsx server.ts",
     "preview": "vite preview --port=3000 --host=0.0.0.0",
     "clean": "rm -rf dist server.js",
@@ -29,6 +29,7 @@
     "react-dom": "^19.0.1",
     "react-hook-form": "^7.92.0",
     "resend": "^6.38.1",
+    "tsx": "^4.21.0",
     "typescript": "5.6.3",
     "vite": "^8.3.0",
     "zod": "^4.6.7"
@@ -39,7 +40,6 @@
     "@types/react-dom": "^19.3.0",
     "autoprefixer": "^10.4.21",
     "esbuild": "^0.28.0",
-    "tailwindcss": "^4.3.3",
-    "tsx": "^4.21.0"
+    "tailwindcss": "^4.3.3"
   }
 }

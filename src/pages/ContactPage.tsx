@@ -6,7 +6,8 @@ import {z} from 'zod';
 import {ContactForm} from '../components/ContactForm';
 import {SeoHead} from '../components/SeoHead';
 import {siteContent} from '../content/site';
-import {buildBreadcrumbSchema, getCanonicalBaseUrl} from '../lib/seo';
+import {buildPageSeoData} from '../lib/routeSeo';
+import {getCanonicalBaseUrl} from '../lib/seo';
 
 const testimonialSchema = z.object({
   name: z.string().trim().min(2, 'Name is required').max(120),
@@ -78,22 +79,16 @@ export function ContactPage() {
   };
 
   const baseUrl = getCanonicalBaseUrl();
+  const seo = buildPageSeoData('/contact', baseUrl, []);
 
   return (
     <>
       <SeoHead
-        title={`Contact ${siteContent.profile.name} | Lucknow, India`}
-        description={`Contact ${siteContent.profile.name} for web development, SEO, or digital strategy inquiries at ${siteContent.contact.email}.`}
+        title={seo.title}
+        description={seo.description}
         path="/contact"
-        schemas={[
-          buildBreadcrumbSchema(
-            [
-              {name: 'Home', path: '/'},
-              {name: 'Contact', path: '/contact'},
-            ],
-            baseUrl,
-          ),
-        ]}
+        ogImage={seo.ogImage}
+        schemas={seo.schemas}
       />
 
       <section className="pt-32 pb-28">

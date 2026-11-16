@@ -38,8 +38,8 @@ Personal portfolio website for **Ojas Awasthi** (Web Developer, Digital Marketer
 ## Deploy on Vercel
 
 This project is built for Vercel's **Hobby (free)** plan:
-- **Build & Output**: Uses `vercel.json` (`framework: "vite"`, `buildCommand: "npm run build"`, `outputDirectory: "dist"`).
-- **Single Serverless Function**: All routes (`/api/projects`, `/api/contact`, `/api/newsletter`, `/api/testimonials`, `/api/settings`, `/api/analytics`, `/robots.txt`, `/sitemap.xml`, and `/api/admin/*`) are merged into one serverless handler (`api/index.ts`) via `vercel.json` rewrites, keeping the deployment well under Vercel Hobby's 12-function limit.
+- **Build & Output**: Uses `vercel.json` (`framework: "vite"`, `buildCommand: "npm run build"`, `outputDirectory: "dist"`). Running `npm run build` compiles Vite and pre-renders static routes (`/`, `/work`, `/books`, `/about`, `/contact`, `/blog`, `/blog/who-is-ojas-awasthi`, `/admin`, `/404`) into HTML with full `<head>` metadata and crawler-visible content.
+- **Single Serverless Function**: All routes (`/api/projects`, `/api/contact`, `/api/newsletter`, `/api/testimonials`, `/api/settings`, `/api/analytics`, `/robots.txt`, `/sitemap.xml`, `/api/admin/*`, plus dynamic `/work/[slug]` SSR metadata and HTTP 404 handling) are merged into one serverless handler (`api/index.ts`) via `vercel.json` rewrites, keeping the deployment well under Vercel Hobby's 12-function limit.
 - **TypeScript Isolation**: `api/tsconfig.json` uses `"types": ["node"]` with zero Vite references, while `src/tsconfig.json` keeps `"types": ["vite/client"]`.
 
 ### Environment Variables to Set in Vercel
@@ -49,7 +49,8 @@ Go to **Vercel → Project Settings → Environment Variables** and add:
 - `VITE_SUPABASE_URL` — Your Supabase Project URL (`https://<ref>.supabase.co`)
 - `VITE_SUPABASE_ANON_KEY` — Your Supabase `anon` public key
 - `VITE_ADMIN_EMAIL` — `ojassawasthi@gmail.com`
-- `VITE_SITE_URL` — Your production URL (e.g. `https://ojasawasthi.com` or `https://your-app.vercel.app`)
+- `VITE_SITE_URL` — `https://ojasawasthii.vercel.app` (or your custom domain)
+- `VITE_GOOGLE_SITE_VERIFICATION` — *(Optional)* Google Search Console HTML meta verification token; leave empty to omit
 - `VITE_GA_MEASUREMENT_ID` — *(Optional)* Google Analytics 4 ID (`G-...`); leave empty to skip GA4
 
 **Server-only variables (`/api` serverless functions only):**

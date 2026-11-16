@@ -2,13 +2,11 @@ import {siteContent} from '../content/site';
 import type {BlogPost, Project} from '../types/database';
 
 export function getCanonicalBaseUrl(): string {
-  if (import.meta.env?.VITE_SITE_URL) {
-    return import.meta.env.VITE_SITE_URL.replace(/\/$/, '');
+  const configured = import.meta.env?.VITE_SITE_URL?.trim();
+  if (configured) {
+    return configured.replace(/\/+$/, '');
   }
-  if (typeof window !== 'undefined' && window.location?.origin) {
-    return window.location.origin;
-  }
-  return siteContent.seo.siteUrl;
+  return siteContent.seo.siteUrl.replace(/\/+$/, '');
 }
 
 export function buildPersonSchema(baseUrl: string) {

@@ -18,9 +18,13 @@ export interface ApiResponse extends ServerResponse {
 
 const SUPABASE_URL = (
   process.env.VITE_SUPABASE_URL ||
+  process.env.NEXT_PUBLIC_SUPABASE_URL ||
   process.env.SUPABASE_URL ||
-  ''
-).trim();
+  'https://hdryciyvkhozomertslx.supabase.co'
+)
+  .trim()
+  .replace(/\/rest\/v1\/?$/i, '')
+  .replace(/\/+$/, '');
 const SUPABASE_SERVICE_ROLE_KEY = (
   process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 ).trim();
@@ -120,25 +124,13 @@ export function hashIp(ip: string): string {
     .slice(0, 24);
 }
 
-export function getBaseUrl(req: ApiRequest): string {
+export function getBaseUrl(_req?: ApiRequest): string {
   const configured = (
     process.env.VITE_SITE_URL ||
     process.env.NEXT_PUBLIC_SITE_URL ||
-    ''
+    'https://ojasawasthii.vercel.app'
   ).trim();
-  if (configured) {
-    return configured.replace(/\/$/, '');
-  }
-  const protoHeader = req.headers['x-forwarded-proto'];
-  const proto =
-    typeof protoHeader === 'string'
-      ? protoHeader.split(',')[0].trim()
-      : 'https';
-  const host =
-    (typeof req.headers['x-forwarded-host'] === 'string'
-      ? req.headers['x-forwarded-host']
-      : req.headers.host) || 'ojasawasthi.com';
-  return `${proto}://${host}`;
+  return configured.replace(/\/+$/, '');
 }
 
 export async function verifyAdminRequest(

@@ -20,7 +20,7 @@ export function ProjectThumbnail({project, className = ''}: ProjectThumbnailProp
       >
         <img
           src={imageUrl}
-          alt={`${project.title} preview`}
+          alt={`${project.title} — website preview by Ojas Awasthi`}
           loading="lazy"
           referrerPolicy="no-referrer"
           onError={() => setFailed(true)}

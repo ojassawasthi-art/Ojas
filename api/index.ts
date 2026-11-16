@@ -1,5 +1,8 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import {z} from 'zod';
 import {siteContent} from '../src/content/site';
+import {buildPageSeoData, injectSeoIntoHtml} from '../src/lib/routeSeo';
 import type {SiteSettingsMap} from '../src/types/database';
 import {
   ADMIN_EMAIL,
@@ -83,7 +86,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
       res,
       200,
       'text/plain; charset=utf-8',
-      `User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api/\n\nSitemap: ${baseUrl}/sitemap.xml\n`,
+      `User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api\n\nSitemap: ${baseUrl}/sitemap.xml\n`,
     );
     return;
   }
@@ -94,28 +97,44 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
   if ((route === '/sitemap.xml' || route === '/api/sitemap') && method === 'GET') {
     const baseUrl = getBaseUrl(req);
     const projects = await getPublishedProjects();
-    const staticRoutes = [
-      '/',
-      '/work',
-      '/about',
-      '/books',
-      '/contact',
-      '/blog',
-      ...siteContent.blogPosts.map((b) => `/blog/${b.slug}`),
-    ];
-    const projectRoutes = projects.map((p) => `/work/${p.slug}`);
-    const allRoutes = [...staticRoutes, ...projectRoutes];
     const nowIso = new Date().toISOString();
+
+    const urlEntries: {loc: string; lastmod: string; changefreq: string; priority: string}[] = [
+      {loc: '/', lastmod: nowIso, changefreq: 'weekly', priority: '1.0'},
+      {loc: '/work', lastmod: nowIso, changefreq: 'weekly', priority: '0.9'},
+      {loc: '/books', lastmod: nowIso, changefreq: 'monthly', priority: '0.8'},
+      {loc: '/about', lastmod: nowIso, changefreq: 'monthly', priority: '0.8'},
+      {loc: '/contact', lastmod: nowIso, changefreq: 'monthly', priority: '0.7'},
+      {loc: '/blog', lastmod: nowIso, changefreq: 'monthly', priority: '0.7'},
+      ...siteContent.blogPosts.map((b) => {
+        const parsed = new Date(b.publishedAt);
+        return {
+          loc: `/blog/${b.slug}`,
+          lastmod: Number.isNaN(parsed.getTime()) ? nowIso : parsed.toISOString(),
+          changefreq: 'monthly',
+          priority: '0.7',
+        };
+      }),
+      ...projects.map((p) => {
+        const parsed = p.created_at ? new Date(p.created_at) : new Date(nowIso);
+        return {
+          loc: `/work/${p.slug}`,
+          lastmod: Number.isNaN(parsed.getTime()) ? nowIso : parsed.toISOString(),
+          changefreq: 'monthly',
+          priority: '0.8',
+        };
+      }),
+    ];
 
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${allRoutes
+${urlEntries
   .map(
-    (r) => `  <url>
-    <loc>${escapeXml(`${baseUrl}${r === '/' ? '' : r}`)}</loc>
-    <lastmod>${nowIso}</lastmod>
-    <changefreq>${r === '/' ? 'weekly' : 'monthly'}</changefreq>
-    <priority>${r === '/' ? '1.0' : '0.8'}</priority>
+    (entry) => `  <url>
+    <loc>${escapeXml(`${baseUrl}${entry.loc === '/' ? '' : entry.loc}`)}</loc>
+    <lastmod>${entry.lastmod}</lastmod>
+    <changefreq>${entry.changefreq}</changefreq>
+    <priority>${entry.priority}</priority>
   </url>`,
   )
   .join('\n')}
@@ -641,5 +660,85 @@ ${allRoutes
     }
   }
 
+  // --------------------------------------------------------------------------
+  // 11. DYNAMIC SSR HTML FOR /work/[slug], /blog/[slug], AND 404 ROUTES
+  // --------------------------------------------------------------------------
+  if ((method === 'GET' || method === 'HEAD') && !route.startsWith('/api/')) {
+    const baseUrl = getBaseUrl(req);
+    const projects = await getPublishedProjects();
+    const seo = buildPageSeoData(route, baseUrl, projects);
+    const templateHtml = await loadHtmlTemplate(baseUrl);
+    const renderedHtml = injectSeoIntoHtml(templateHtml, seo);
+
+    if (seo.statusCode === 404) {
+      res.setHeader('Cache-Control', 'no-store');
+    } else {
+      res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
+    }
+    sendText(res, seo.statusCode, 'text/html; charset=utf-8', renderedHtml);
+    return;
+  }
+
   sendJson(res, 404, {error: `Unknown API route: ${method} ${route}`});
+}
+
+let cachedHtmlTemplate: string | null = null;
+
+async function loadHtmlTemplate(baseUrl: string): Promise<string> {
+  if (cachedHtmlTemplate) return cachedHtmlTemplate;
+
+  const candidates = [
+    path.resolve(process.cwd(), 'dist', 'index.html'),
+    path.resolve(process.cwd(), 'index.html'),
+  ];
+
+  for (const candidate of candidates) {
+    try {
+      if (fs.existsSync(candidate)) {
+        cachedHtmlTemplate = fs.readFileSync(candidate, 'utf-8');
+        return cachedHtmlTemplate;
+      }
+    } catch {
+      // Try next candidate
+    }
+  }
+
+  try {
+    const res = await fetch(`${baseUrl}/index.html`, {
+      headers: {'x-oa-ssr-fetch': '1'},
+    });
+    if (res.ok) {
+      const text = await res.text();
+      if (text.includes('</head>')) {
+        cachedHtmlTemplate = text;
+        return cachedHtmlTemplate;
+      }
+    }
+  } catch {
+    // Fall back to minimal semantic HTML shell if bundle template is unavailable
+  }
+
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ojas Awasthi</title>
+    <meta name="description" content="" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="${baseUrl}" />
+    <link rel="alternate" hreflang="en-IN" href="${baseUrl}" />
+    <!-- SEO_HEAD_LINKS -->
+    <meta property="og:url" content="${baseUrl}" />
+    <meta property="og:title" content="Ojas Awasthi" />
+    <meta property="og:description" content="" />
+    <meta property="og:image" content="${baseUrl}/og-image.png" />
+    <meta name="twitter:title" content="Ojas Awasthi" />
+    <meta name="twitter:description" content="" />
+    <meta name="twitter:image" content="${baseUrl}/og-image.png" />
+  </head>
+  <body>
+    <!-- SSR_BODY_START --><div id="root"></div><!-- SSR_BODY_END -->
+  </body>
+</html>`;
 }

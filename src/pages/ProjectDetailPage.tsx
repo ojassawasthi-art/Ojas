@@ -1,14 +1,10 @@
 import {ArrowLeft, ArrowRight, ArrowUpRight} from 'lucide-react';
 import {ProjectThumbnail} from '../components/ProjectThumbnail';
 import {SeoHead} from '../components/SeoHead';
-import {siteContent} from '../content/site';
 import {useRouter} from '../context/RouterContext';
+import {buildPageSeoData} from '../lib/routeSeo';
 import {extractDomain, getProjectThumbnailUrl} from '../lib/screenshot';
-import {
-  buildBreadcrumbSchema,
-  buildProjectSchema,
-  getCanonicalBaseUrl,
-} from '../lib/seo';
+import {getCanonicalBaseUrl} from '../lib/seo';
 import type {Project} from '../types/database';
 
 interface ProjectDetailPageProps {
@@ -43,27 +39,36 @@ export function ProjectDetailPage({
 
   if (!project) {
     return (
-      <section className="pt-36 pb-28">
-        <div className="mx-auto max-w-[1200px] px-6 text-center">
-          <h1 className="font-serif-display text-5xl text-[var(--text)]">
-            Project not found
-          </h1>
-          <p className="mt-4 text-sm text-[var(--muted)]">
-            This case study may have been unpublished or moved.
-          </p>
-          <button
-            type="button"
-            onClick={() => navigate('/work')}
-            className="mt-8 rounded-xl border border-[var(--border)] px-5 py-2.5 text-sm font-medium text-[var(--text)]"
-          >
-            Return to Work
-          </button>
-        </div>
-      </section>
+      <>
+        <SeoHead
+          title="Project Not Found | Ojas Awasthi"
+          description="The requested project case study could not be found on Ojas Awasthi portfolio."
+          path="/404"
+          noIndex
+        />
+        <section className="pt-36 pb-28">
+          <div className="mx-auto max-w-[1200px] px-6 text-center">
+            <h1 className="font-serif-display text-5xl text-[var(--text)]">
+              Project not found
+            </h1>
+            <p className="mt-4 text-sm text-[var(--muted)]">
+              This case study may have been unpublished or moved.
+            </p>
+            <button
+              type="button"
+              onClick={() => navigate('/work')}
+              className="mt-8 rounded-xl border border-[var(--border)] px-5 py-2.5 text-sm font-medium text-[var(--text)]"
+            >
+              Return to Work
+            </button>
+          </div>
+        </section>
+      </>
     );
   }
 
   const baseUrl = getCanonicalBaseUrl();
+  const seo = buildPageSeoData(`/work/${project.slug}`, baseUrl, published);
   const domain = extractDomain(project.live_url);
   const autoPreview = getProjectThumbnailUrl(
     project.thumbnail_url,
@@ -79,20 +84,11 @@ export function ProjectDetailPage({
   return (
     <>
       <SeoHead
-        title={`${project.title} — Case Study | ${siteContent.profile.name}`}
-        description={project.description}
+        title={seo.title}
+        description={seo.description}
         path={`/work/${project.slug}`}
-        schemas={[
-          buildProjectSchema(project, baseUrl),
-          buildBreadcrumbSchema(
-            [
-              {name: 'Home', path: '/'},
-              {name: 'Work', path: '/work'},
-              {name: project.title, path: `/work/${project.slug}`},
-            ],
-            baseUrl,
-          ),
-        ]}
+        ogImage={seo.ogImage}
+        schemas={seo.schemas}
       />
 
       <article className="pt-32 pb-28">
@@ -245,7 +241,7 @@ export function ProjectDetailPage({
                   >
                     <img
                       src={imgUrl}
-                      alt={`${project.title} view ${idx + 2}`}
+                      alt={`${project.title} — showcase image ${idx + 2} by Ojas Awasthi`}
                       referrerPolicy="no-referrer"
                       className="aspect-[16/10] w-full object-cover"
                     />

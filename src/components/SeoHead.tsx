@@ -6,6 +6,7 @@ interface SeoHeadProps {
   title?: string;
   description?: string;
   path?: string;
+  ogImage?: string;
   schemas?: Record<string, unknown>[];
   noIndex?: boolean;
 }
@@ -24,23 +25,27 @@ export function SeoHead({
   title = siteContent.seo.defaultTitle,
   description = siteContent.seo.defaultDescription,
   path = '/',
+  ogImage,
   schemas = [],
   noIndex = false,
 }: SeoHeadProps) {
   useEffect(() => {
     const baseUrl = getCanonicalBaseUrl();
     const canonicalUrl = `${baseUrl}${path === '/' ? '' : path}`;
+    const resolvedImage = ogImage || `${baseUrl}/og-image.png`;
 
     document.title = title;
     setMetaTag('name', 'description', description);
-    setMetaTag('name', 'robots', noIndex ? 'noindex, nofollow' : 'index, follow');
+    setMetaTag('name', 'robots', noIndex ? 'noindex,nofollow' : 'index, follow');
 
     setMetaTag('property', 'og:title', title);
     setMetaTag('property', 'og:description', description);
     setMetaTag('property', 'og:url', canonicalUrl);
+    setMetaTag('property', 'og:image', resolvedImage);
 
     setMetaTag('name', 'twitter:title', title);
     setMetaTag('name', 'twitter:description', description);
+    setMetaTag('name', 'twitter:image', resolvedImage);
 
     let canonicalLink = document.querySelector('link[rel="canonical"]');
     if (!canonicalLink) {
@@ -70,7 +75,7 @@ export function SeoHead({
       script.textContent = JSON.stringify(schema);
       document.head.appendChild(script);
     });
-  }, [title, description, path, schemas, noIndex]);
+  }, [title, description, path, ogImage, schemas, noIndex]);
 
   return null;
 }

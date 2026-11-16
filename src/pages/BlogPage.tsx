@@ -2,11 +2,8 @@ import {ArrowLeft, ArrowUpRight} from 'lucide-react';
 import {SeoHead} from '../components/SeoHead';
 import {siteContent} from '../content/site';
 import {useRouter} from '../context/RouterContext';
-import {
-  buildArticleSchema,
-  buildBreadcrumbSchema,
-  getCanonicalBaseUrl,
-} from '../lib/seo';
+import {buildPageSeoData} from '../lib/routeSeo';
+import {getCanonicalBaseUrl} from '../lib/seo';
 
 interface BlogPageProps {
   slug?: string;
@@ -20,40 +17,41 @@ export function BlogPage({slug}: BlogPageProps) {
     const post = siteContent.blogPosts.find((p) => p.slug === slug);
     if (!post) {
       return (
-        <section className="pt-36 pb-28">
-          <div className="mx-auto max-w-[1200px] px-6 text-center">
-            <h1 className="font-serif-display text-5xl text-[var(--text)]">
-              Article not found
-            </h1>
-            <button
-              type="button"
-              onClick={() => navigate('/blog')}
-              className="mt-8 rounded-xl border border-[var(--border)] px-5 py-2.5 text-sm font-medium text-[var(--text)]"
-            >
-              Back to articles
-            </button>
-          </div>
-        </section>
+        <>
+          <SeoHead
+            title={`Article Not Found | ${siteContent.profile.name}`}
+            description="The requested article could not be found on Ojas Awasthi portfolio."
+            path="/404"
+            noIndex
+          />
+          <section className="pt-36 pb-28">
+            <div className="mx-auto max-w-[1200px] px-6 text-center">
+              <h1 className="font-serif-display text-5xl text-[var(--text)]">
+                Article not found
+              </h1>
+              <button
+                type="button"
+                onClick={() => navigate('/blog')}
+                className="mt-8 rounded-xl border border-[var(--border)] px-5 py-2.5 text-sm font-medium text-[var(--text)]"
+              >
+                Back to articles
+              </button>
+            </div>
+          </section>
+        </>
       );
     }
+
+    const postSeo = buildPageSeoData(`/blog/${post.slug}`, baseUrl, []);
 
     return (
       <>
         <SeoHead
-          title={`${post.title} | ${siteContent.profile.name}`}
-          description={post.description}
+          title={postSeo.title}
+          description={postSeo.description}
           path={`/blog/${post.slug}`}
-          schemas={[
-            buildArticleSchema(post, baseUrl),
-            buildBreadcrumbSchema(
-              [
-                {name: 'Home', path: '/'},
-                {name: 'Articles', path: '/blog'},
-                {name: post.title, path: `/blog/${post.slug}`},
-              ],
-              baseUrl,
-            ),
-          ]}
+          ogImage={postSeo.ogImage}
+          schemas={postSeo.schemas}
         />
 
         <article className="pt-32 pb-28">
@@ -104,21 +102,16 @@ export function BlogPage({slug}: BlogPageProps) {
     );
   }
 
+  const blogSeo = buildPageSeoData('/blog', baseUrl, []);
+
   return (
     <>
       <SeoHead
-        title={`Articles | ${siteContent.profile.name}`}
-        description={`Notes and articles by ${siteContent.profile.name} on web development, digital strategy, and background.`}
+        title={blogSeo.title}
+        description={blogSeo.description}
         path="/blog"
-        schemas={[
-          buildBreadcrumbSchema(
-            [
-              {name: 'Home', path: '/'},
-              {name: 'Articles', path: '/blog'},
-            ],
-            baseUrl,
-          ),
-        ]}
+        ogImage={blogSeo.ogImage}
+        schemas={blogSeo.schemas}
       />
 
       <section className="pt-32 pb-28">

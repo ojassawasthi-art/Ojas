@@ -2,31 +2,21 @@ import {ArrowUpRight} from 'lucide-react';
 import {BookCover} from '../components/BookCover';
 import {SeoHead} from '../components/SeoHead';
 import {siteContent} from '../content/site';
-import {
-  buildBookSchemas,
-  buildBreadcrumbSchema,
-  getCanonicalBaseUrl,
-} from '../lib/seo';
+import {buildPageSeoData} from '../lib/routeSeo';
+import {getCanonicalBaseUrl} from '../lib/seo';
 
 export function BooksPage() {
   const baseUrl = getCanonicalBaseUrl();
+  const seo = buildPageSeoData('/books', baseUrl, []);
 
   return (
     <>
       <SeoHead
-        title={`Books by ${siteContent.profile.name}`}
-        description={`Published books by ${siteContent.profile.name}: Mastering the Art of Manipulation and The Echoes of Love on Amazon and Google Play Books.`}
+        title={seo.title}
+        description={seo.description}
         path="/books"
-        schemas={[
-          ...buildBookSchemas(baseUrl),
-          buildBreadcrumbSchema(
-            [
-              {name: 'Home', path: '/'},
-              {name: 'Books', path: '/books'},
-            ],
-            baseUrl,
-          ),
-        ]}
+        ogImage={seo.ogImage}
+        schemas={seo.schemas}
       />
 
       <section className="pt-32 pb-28">

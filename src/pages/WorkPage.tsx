@@ -2,7 +2,8 @@ import {useMemo, useState} from 'react';
 import {ProjectCard} from '../components/ProjectCard';
 import {SeoHead} from '../components/SeoHead';
 import {siteContent} from '../content/site';
-import {buildBreadcrumbSchema, getCanonicalBaseUrl} from '../lib/seo';
+import {buildPageSeoData} from '../lib/routeSeo';
+import {getCanonicalBaseUrl} from '../lib/seo';
 import type {Project} from '../types/database';
 
 interface WorkPageProps {
@@ -34,22 +35,19 @@ export function WorkPage({projects, loading}: WorkPageProps) {
   }, [publishedProjects, activeCategory]);
 
   const baseUrl = getCanonicalBaseUrl();
+  const seo = useMemo(
+    () => buildPageSeoData('/work', baseUrl, publishedProjects),
+    [baseUrl, publishedProjects],
+  );
 
   return (
     <>
       <SeoHead
-        title={`Work & Case Studies | ${siteContent.profile.name}`}
-        description={`Web development projects and e-commerce builds by ${siteContent.profile.name} in Lucknow, India.`}
+        title={seo.title}
+        description={seo.description}
         path="/work"
-        schemas={[
-          buildBreadcrumbSchema(
-            [
-              {name: 'Home', path: '/'},
-              {name: 'Work', path: '/work'},
-            ],
-            baseUrl,
-          ),
-        ]}
+        ogImage={seo.ogImage}
+        schemas={seo.schemas}
       />
 
       <section className="pt-32 pb-28">

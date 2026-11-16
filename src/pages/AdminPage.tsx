@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import {useCallback, useEffect, useState} from 'react';
 import {SeoHead} from '../components/SeoHead';
+import {getCanonicalBaseUrl} from '../lib/seo';
 import {ADMIN_EMAIL, isSupabaseConfigured, supabase} from '../lib/supabase';
 import type {
   ContactMessage,
@@ -187,7 +188,7 @@ export function AdminPage({onDataChanged}: AdminPageProps) {
       const {error} = await supabase.auth.signInWithOtp({
         email: loginEmail.trim(),
         options: {
-          emailRedirectTo: `${window.location.origin}/admin`,
+          emailRedirectTo: `${getCanonicalBaseUrl()}/admin`,
         },
       });
       setSendingLink(false);
@@ -468,7 +469,7 @@ export function AdminPage({onDataChanged}: AdminPageProps) {
   if (!userEmail) {
     return (
       <>
-        <SeoHead title="Admin | Ojas Awasthi" noIndex />
+        <SeoHead title="Admin | Ojas Awasthi" path="/admin" noIndex />
         <section className="flex min-h-[75vh] items-center pt-24 pb-20">
           <div className="mx-auto w-full max-w-md px-6">
             <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-8">
@@ -530,7 +531,7 @@ export function AdminPage({onDataChanged}: AdminPageProps) {
 
   return (
     <>
-      <SeoHead title="Admin Console | Ojas Awasthi" noIndex />
+      <SeoHead title="Admin Console | Ojas Awasthi" path="/admin" noIndex />
       <section className="pt-28 pb-24">
         <div className="mx-auto max-w-[1200px] px-6">
           <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--border)] pb-6">

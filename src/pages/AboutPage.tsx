@@ -4,16 +4,13 @@ import {JourneyTimeline} from '../components/JourneyTimeline';
 import {PortraitArch} from '../components/PortraitArch';
 import {SeoHead} from '../components/SeoHead';
 import {siteContent} from '../content/site';
-import {
-  buildBreadcrumbSchema,
-  buildFaqSchema,
-  buildPersonSchema,
-  getCanonicalBaseUrl,
-} from '../lib/seo';
+import {buildPageSeoData} from '../lib/routeSeo';
+import {getCanonicalBaseUrl} from '../lib/seo';
 
 export function AboutPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const baseUrl = getCanonicalBaseUrl();
+  const seo = buildPageSeoData('/about', baseUrl, []);
 
   const handleCopy = async (id: string) => {
     try {
@@ -28,20 +25,11 @@ export function AboutPage() {
   return (
     <>
       <SeoHead
-        title={`About ${siteContent.profile.name} | Web Developer & Author in Lucknow`}
-        description={`Learn about ${siteContent.profile.name}: web development, The Vaxn Store, University of Lucknow B.Com, CS preparation, books, and certifications.`}
+        title={seo.title}
+        description={seo.description}
         path="/about"
-        schemas={[
-          buildPersonSchema(baseUrl),
-          buildFaqSchema(),
-          buildBreadcrumbSchema(
-            [
-              {name: 'Home', path: '/'},
-              {name: 'About', path: '/about'},
-            ],
-            baseUrl,
-          ),
-        ]}
+        ogImage={seo.ogImage}
+        schemas={seo.schemas}
       />
 
       <section className="pt-32 pb-20">
