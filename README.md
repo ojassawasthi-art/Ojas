@@ -38,8 +38,8 @@ Personal portfolio website for **Ojas Awasthi** (Web Developer, Digital Marketer
 ## Deploy on Vercel
 
 This project is built for Vercel's **Hobby (free)** plan:
-- **Build & Output**: Uses `vercel.json` (`framework: "vite"`, `buildCommand: "npm run build"`, `outputDirectory: "dist"`). Running `npm run build` compiles Vite and pre-renders static routes (`/`, `/work`, `/books`, `/about`, `/contact`, `/blog`, `/blog/who-is-ojas-awasthi`, `/admin`, `/404`) into HTML with full `<head>` metadata and crawler-visible content.
-- **Single Serverless Function**: All routes (`/api/projects`, `/api/contact`, `/api/newsletter`, `/api/testimonials`, `/api/settings`, `/api/analytics`, `/robots.txt`, `/sitemap.xml`, `/api/admin/*`, plus dynamic `/work/[slug]` SSR metadata and HTTP 404 handling) are merged into one serverless handler (`api/index.ts`) via `vercel.json` rewrites, keeping the deployment well under Vercel Hobby's 12-function limit.
+- **Build & Output**: Uses `vercel.json` (`framework: "vite"`, `buildCommand: "npm run build"`, `outputDirectory: "dist"`). Running `npm run build` compiles Vite and pre-renders static routes (`/`, `/about`, `/education`, `/books`, `/services`, `/work`, `/blog`, all `/blog/<slug>` articles, `/press-kit`, `/links`, `/contact`, `/admin`, `/404`) into HTML with full `<head>` metadata and crawler-visible content.
+- **Single Serverless Function**: All routes (`/api/projects`, `/api/contact`, `/api/newsletter`, `/api/testimonials`, `/api/settings`, `/api/analytics`, `/sitemap.xml`, `/api/admin/*`, plus dynamic `/work/[slug]` SSR metadata and HTTP 404 handling) are merged into one serverless handler (`api/index.ts`) via `vercel.json` rewrites, keeping the deployment well under Vercel Hobby's 12-function limit. Static files (`robots.txt`, `llms.txt`, `favicon.*`, `images/*`) are served directly without hitting serverless functions.
 - **TypeScript Isolation**: `api/tsconfig.json` uses `"types": ["node"]` with zero Vite references, while `src/tsconfig.json` keeps `"types": ["vite/client"]`.
 
 ### Environment Variables to Set in Vercel
@@ -67,19 +67,32 @@ Go to **Vercel → Project Settings → Environment Variables** and add:
 
 ---
 
-## 3. SEO Launch Checklist
+## 3. Off-Site SEO & Indexing Checklist
 
-1. **Buy & connect a clean personal domain** (e.g., `ojasawasthi.com`) on Vercel and update `VITE_SITE_URL` / `NEXT_PUBLIC_SITE_URL`.
-2. **Verify ownership in Google Search Console & Bing Webmaster Tools**, then submit `https://yourdomain.com/sitemap.xml`.
-3. **Inspect key URLs** (`/`, `/work`, `/about`, `/books`, `/blog/who-is-ojas-awasthi`) in Search Console URL Inspection to confirm indexing and Schema.org rich results (`Person`, `Book`, `FAQPage`, `CreativeWork`, `BreadcrumbList`).
-4. **Maintain Entity Consistency**: Keep the exact same name (**Ojas Awasthi**), bio summary, and portrait image across LinkedIn (`in/ojassawasthi`), Instagram (`@_ojas0001_`), Telegram (`@ojasawasthiiii`), Amazon Author Central, and Google Play Books.
-5. **Cross-link everywhere**: Link your live portfolio URL from your LinkedIn profile, Instagram bio, Amazon author page, and GitHub profile so search engines connect every `sameAs` entity back to your canonical domain.
-6. **Content & keyword strategy**: Ranking for just a single first name like `"Ojas"` is highly competitive across India. Focus first on `"Ojas Awasthi"`, `"Ojas Awasthi Lucknow"`, `"Ojas Awasthi web developer"`, `"Ojas Awasthi Vaxn"`, `"Mastering the Art of Manipulation author"`, and `"web developer in Lucknow"` via project case studies and short factual articles in `/blog`.
+1. **Verify Google Search Console & Submit Sitemap**:
+   - Confirm ownership using the existing `<meta name="google-site-verification" ... />` tag on `/`.
+   - Submit `https://ojasawasthii.vercel.app/sitemap.xml` inside **Indexing → Sitemaps**.
+   - Use **URL Inspection → Request Indexing** for `/`, `/about`, `/education`, `/services`, `/work`, `/books`, `/blog`, `/press-kit`, `/links`, `/contact`, and key articles/projects.
+2. **Import Into Bing Webmaster Tools**:
+   - Sign in to Bing Webmaster Tools, import the verified site directly from Google Search Console, and verify `/sitemap.xml` is ingested cleanly.
+3. **Name, Bio & Photo Consistency Across Platforms**:
+   - Keep **Ojas Awasthi**, the Lucknow, Uttar Pradesh, India location, your `/images/ojas.jpg` portrait, and a consistent factual headline aligned across:
+     - LinkedIn (`https://www.linkedin.com/in/ojassawasthi`)
+     - Instagram (`https://www.instagram.com/_ojas0001_`)
+     - Telegram (`https://t.me/ojasawasthiiii`)
+     - Amazon Author Central & Google Play Books author profiles (add those URLs to `authorProfiles` in `src/content/site.ts` and `api/_lib/site-data.ts` once claimed so `sameAs` JSON-LD includes them automatically).
+4. **Developer & Writing Profiles Linking Back to Canonical Domain**:
+   - Add your canonical portfolio URL (`https://ojasawasthii.vercel.app`) to GitHub, Medium, Quora, Behance, and Peerlist profiles to reinforce entity resolution.
+5. **Google Business Profile (Local Freelance Visibility)**:
+   - Register a Google Business Profile for freelance web development in **Lucknow, Uttar Pradesh, India**, linking directly to `/services` and `/contact`.
+6. **Custom Domain Upgrade (When Ready)**:
+   - Connect a personal domain (e.g., `ojasawasthi.com`) in Vercel Domains.
+   - Update `VITE_SITE_URL` / `NEXT_PUBLIC_SITE_URL`, `siteContent.seo.siteUrl`, `public/robots.txt`, `public/llms.txt`, and Supabase **Authentication → URL Configuration** (`Site URL` and `Redirect URLs`).
 
 ---
 
 ## 4. How to Edit Content Later
 
-- **Profile copy, books, credentials, experience, skills, blog posts**: Edit `src/content/site.ts`. Every static section reads from that single file.
-- **Swap your portrait photo**: Place your portrait file at `public/images/ojas.jpg` (recommended 4:5 aspect ratio). The `"OA"` monogram frame will automatically switch to your photo.
+- **Profile copy, books, credentials, experience, skills, blog posts**: Edit `src/content/site.ts` (and mirror updates into `api/_lib/site-data.ts`).
+- **Swap your portrait photo**: Place your portrait file at `public/images/ojas.jpg` (recommended 4:5 aspect ratio). The `"OA"` monogram frame will automatically switch to your photo, and `/press-kit` and `Person` JSON-LD will reference it cleanly.
 - **Add or update projects, messages, testimonials, and availability**: Visit `/admin`, sign in with your `ojassawasthi@gmail.com` magic link, and manage projects (including thumbnail uploads and drag-to-reorder), inbox statuses, testimonial approvals, and the Hero availability badge. New published projects automatically appear in `/work`, on `/`, and in `/sitemap.xml`.

@@ -77,15 +77,19 @@ async function run() {
   // while keeping SSR_BODY markers inside dist/index.html as well.
   const staticRoutes: {route: string; outFile: string}[] = [
     {route: '/', outFile: path.join(distDir, 'index.html')},
-    {route: '/work', outFile: path.join(distDir, 'work', 'index.html')},
-    {route: '/books', outFile: path.join(distDir, 'books', 'index.html')},
     {route: '/about', outFile: path.join(distDir, 'about', 'index.html')},
-    {route: '/contact', outFile: path.join(distDir, 'contact', 'index.html')},
+    {route: '/education', outFile: path.join(distDir, 'education', 'index.html')},
+    {route: '/books', outFile: path.join(distDir, 'books', 'index.html')},
+    {route: '/services', outFile: path.join(distDir, 'services', 'index.html')},
+    {route: '/work', outFile: path.join(distDir, 'work', 'index.html')},
     {route: '/blog', outFile: path.join(distDir, 'blog', 'index.html')},
     ...siteContent.blogPosts.map((post) => ({
       route: `/blog/${post.slug}`,
       outFile: path.join(distDir, 'blog', post.slug, 'index.html'),
     })),
+    {route: '/press-kit', outFile: path.join(distDir, 'press-kit', 'index.html')},
+    {route: '/links', outFile: path.join(distDir, 'links', 'index.html')},
+    {route: '/contact', outFile: path.join(distDir, 'contact', 'index.html')},
     {route: '/admin', outFile: path.join(distDir, 'admin', 'index.html')},
     {route: '/404', outFile: path.join(distDir, '404.html')},
   ];

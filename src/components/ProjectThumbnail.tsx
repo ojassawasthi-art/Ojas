@@ -21,7 +21,10 @@ export function ProjectThumbnail({project, className = ''}: ProjectThumbnailProp
         <img
           src={imageUrl}
           alt={`${project.title} — website preview by Ojas Awasthi`}
+          width={1280}
+          height={720}
           loading="lazy"
+          decoding="async"
           referrerPolicy="no-referrer"
           onError={() => setFailed(true)}
           className="h-full w-full object-cover object-top transition-transform duration-500 ease-out group-hover:scale-[1.03]"

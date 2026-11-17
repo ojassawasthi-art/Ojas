@@ -112,13 +112,55 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
           lastmod: string;
           changefreq: string;
           priority: string;
+          images?: {loc: string; title: string}[];
         }[] = [
-          {loc: '/', lastmod: nowIso, changefreq: 'weekly', priority: '1.0'},
-          {loc: '/work', lastmod: nowIso, changefreq: 'weekly', priority: '0.9'},
+          {
+            loc: '/',
+            lastmod: nowIso,
+            changefreq: 'weekly',
+            priority: '1.0',
+            images: [
+              {
+                loc: `${baseUrl}/images/ojas.jpg`,
+                title: 'Ojas Awasthi, web developer and author from Lucknow',
+              },
+              {
+                loc: `${baseUrl}/og-image.png`,
+                title: 'Ojas Awasthi — Web Developer, Digital Marketer & Author in Lucknow',
+              },
+            ],
+          },
+          {
+            loc: '/about',
+            lastmod: nowIso,
+            changefreq: 'monthly',
+            priority: '0.9',
+            images: [
+              {
+                loc: `${baseUrl}/images/ojas.jpg`,
+                title: 'Ojas Awasthi portrait',
+              },
+            ],
+          },
+          {loc: '/education', lastmod: nowIso, changefreq: 'monthly', priority: '0.8'},
           {loc: '/books', lastmod: nowIso, changefreq: 'monthly', priority: '0.8'},
-          {loc: '/about', lastmod: nowIso, changefreq: 'monthly', priority: '0.8'},
+          {loc: '/services', lastmod: nowIso, changefreq: 'monthly', priority: '0.8'},
+          {loc: '/work', lastmod: nowIso, changefreq: 'weekly', priority: '0.9'},
+          {loc: '/blog', lastmod: nowIso, changefreq: 'weekly', priority: '0.8'},
+          {
+            loc: '/press-kit',
+            lastmod: nowIso,
+            changefreq: 'monthly',
+            priority: '0.7',
+            images: [
+              {
+                loc: `${baseUrl}/images/ojas.jpg`,
+                title: 'Ojas Awasthi press kit portrait',
+              },
+            ],
+          },
+          {loc: '/links', lastmod: nowIso, changefreq: 'monthly', priority: '0.7'},
           {loc: '/contact', lastmod: nowIso, changefreq: 'monthly', priority: '0.7'},
-          {loc: '/blog', lastmod: nowIso, changefreq: 'monthly', priority: '0.7'},
           ...siteData.blogPosts.map((b) => {
             const parsed = new Date(b.publishedAt);
             return {
@@ -130,26 +172,39 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
           }),
           ...projects.map((p) => {
             const parsed = p.created_at ? new Date(p.created_at) : new Date(nowIso);
+            const imgs = p.thumbnail_url
+              ? [{loc: p.thumbnail_url, title: `${p.title} by Ojas Awasthi`}]
+              : undefined;
             return {
               loc: `/work/${p.slug}`,
               lastmod: Number.isNaN(parsed.getTime()) ? nowIso : parsed.toISOString(),
               changefreq: 'monthly',
               priority: '0.8',
+              images: imgs,
             };
           }),
         ];
 
         const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 ${urlEntries
-  .map(
-    (entry) => `  <url>
+  .map((entry) => {
+    const imgTags = (entry.images || [])
+      .map(
+        (img) => `    <image:image>
+      <image:loc>${escapeXml(img.loc)}</image:loc>
+      <image:title>${escapeXml(img.title)}</image:title>
+    </image:image>`,
+      )
+      .join('\n');
+    return `  <url>
     <loc>${escapeXml(`${baseUrl}${entry.loc === '/' ? '' : entry.loc}`)}</loc>
     <lastmod>${entry.lastmod}</lastmod>
     <changefreq>${entry.changefreq}</changefreq>
-    <priority>${entry.priority}</priority>
-  </url>`,
-  )
+    <priority>${entry.priority}</priority>${imgTags ? `\n${imgTags}` : ''}
+  </url>`;
+  })
   .join('\n')}
 </urlset>`;
 

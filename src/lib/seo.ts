@@ -9,12 +9,33 @@ export function getCanonicalBaseUrl(): string {
   return siteContent.seo.siteUrl.replace(/\/+$/, '');
 }
 
+const PERSON_KNOWS_ABOUT = [
+  'Web Development',
+  'React',
+  'Next.js',
+  'Tailwind CSS',
+  'Supabase',
+  'SEO',
+  'Digital Marketing',
+  'Corporate Governance',
+  'Company Secretary Studies',
+  'Securities Markets',
+  'Human Psychology',
+];
+
 export function buildPersonSchema(baseUrl: string) {
+  const sameAs = [
+    ...siteContent.contact.socials
+      .filter((s) => s.url.startsWith('http'))
+      .map((s) => s.url),
+    ...siteContent.profile.authorProfiles,
+  ];
+
   return {
     '@context': 'https://schema.org',
     '@type': 'Person',
     name: siteContent.profile.name,
-    alternateName: siteContent.profile.alternateName,
+    alternateName: ['Ojas', 'ओजस अवस्थी', 'Ojas Awasthy'],
     jobTitle: 'Web Developer, Digital Marketer & Published Author',
     description: siteContent.profile.siteHeadline,
     url: baseUrl,
@@ -24,7 +45,7 @@ export function buildPersonSchema(baseUrl: string) {
       '@type': 'PostalAddress',
       addressLocality: siteContent.profile.city,
       addressRegion: siteContent.profile.region,
-      addressCountry: siteContent.profile.country,
+      addressCountry: 'IN',
     },
     alumniOf: [
       {
@@ -33,17 +54,48 @@ export function buildPersonSchema(baseUrl: string) {
       },
       {
         '@type': 'HighSchool',
-        name: "St. Xavier's High School, India",
+        name: "St. Xavier's High School, Gonda",
       },
     ],
-    knowsAbout: [
-      ...siteContent.skillsMarquee,
-      ...siteContent.profile.interests,
+    parent: {
+      '@type': 'Person',
+      name: siteContent.profile.fatherName,
+    },
+    hasCredential: [
+      {
+        '@type': 'EducationalOccupationalCredential',
+        name: 'Data Science and Analytics',
+        credentialCategory: 'certificate',
+        recognizedBy: {
+          '@type': 'Organization',
+          name: 'HP LIFE',
+        },
+        url: 'https://www.life-global.org/certificate/aac4e2bf-629f-454d-aae2-36d3f8e7b3ae',
+      },
+      {
+        '@type': 'EducationalOccupationalCredential',
+        name: 'Digital Marketing',
+        credentialCategory: 'certificate',
+        recognizedBy: {
+          '@type': 'Organization',
+          name: 'HubSpot Academy',
+        },
+        url: 'https://app-na2.hubspot.com/academy/achievements/5czcf8hb/en/1/ojas-awasthi/digital-marketing',
+      },
+      {
+        '@type': 'EducationalOccupationalCredential',
+        name: 'NISM Series XXI-A: Securities Market Foundation',
+        credentialCategory: 'certificate',
+        identifier: 'NISM20260000393507-001',
+        recognizedBy: {
+          '@type': 'Organization',
+          name: 'National Institute of Securities Markets',
+        },
+      },
     ],
+    knowsAbout: PERSON_KNOWS_ABOUT,
     knowsLanguage: siteContent.profile.languages.map((lang) => lang.name),
-    sameAs: siteContent.contact.socials
-      .filter((s) => s.url.startsWith('http'))
-      .map((s) => s.url),
+    sameAs,
   };
 }
 
@@ -51,7 +103,8 @@ export function buildWebSiteSchema(baseUrl: string) {
   return {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    name: `${siteContent.profile.name} — Web Developer & Digital Strategist`,
+    name: `${siteContent.profile.name} — Web Developer & Author`,
+    alternateName: ['Ojas Awasthi', 'ओजस अवस्थी', 'Ojas Awasthy'],
     url: baseUrl,
     inLanguage: 'en-IN',
     author: {
@@ -74,12 +127,18 @@ export function buildProfessionalServiceSchema(baseUrl: string) {
   return {
     '@context': 'https://schema.org',
     '@type': 'ProfessionalService',
-    name: `${siteContent.profile.name} — Web Development & Digital Strategy`,
-    url: baseUrl,
-    areaServed: {
-      '@type': 'City',
-      name: 'Lucknow',
-    },
+    name: `${siteContent.profile.name} — Web Development & Digital Marketing`,
+    url: `${baseUrl}/services`,
+    areaServed: [
+      {
+        '@type': 'City',
+        name: 'Lucknow',
+      },
+      {
+        '@type': 'Country',
+        name: 'India',
+      },
+    ],
     address: {
       '@type': 'PostalAddress',
       addressLocality: 'Lucknow',
@@ -95,24 +154,36 @@ export function buildProfessionalServiceSchema(baseUrl: string) {
 }
 
 export function buildBookSchemas(baseUrl: string) {
-  return siteContent.books.map((book) => ({
-    '@context': 'https://schema.org',
-    '@type': 'Book',
-    name: book.subtitle ? `${book.title}: ${book.subtitle}` : book.title,
-    author: {
-      '@type': 'Person',
-      name: book.author,
-      url: baseUrl,
-    },
-    publisher: {
-      '@type': 'Organization',
-      name: book.publisher,
-    },
-    ...(book.publishedDate ? {datePublished: book.publishedDate} : {}),
-    description: book.description,
-    url: book.buyUrl || book.links[0]?.url || `${baseUrl}/books`,
-    sameAs: book.links.map((l) => l.url),
-  }));
+  return siteContent.books.map((book) => {
+    const resolvedUrl = book.buyUrl || book.links[0]?.url || `${baseUrl}/books`;
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'Book',
+      name: book.subtitle ? `${book.title}: ${book.subtitle}` : book.title,
+      author: {
+        '@type': 'Person',
+        name: book.author,
+        url: baseUrl,
+      },
+      publisher: {
+        '@type': 'Organization',
+        name: book.publisher,
+      },
+      ...(book.publishedDate ? {datePublished: book.publishedDate} : {}),
+      description: book.description,
+      url: resolvedUrl,
+      sameAs: book.links.map((l) => l.url),
+      ...(book.buyUrl
+        ? {
+            offers: {
+              '@type': 'Offer',
+              availability: 'https://schema.org/InStock',
+              url: book.buyUrl,
+            },
+          }
+        : {}),
+    };
+  });
 }
 
 export function buildProjectSchema(project: Project, baseUrl: string) {
@@ -143,7 +214,7 @@ export function buildBreadcrumbSchema(
       '@type': 'ListItem',
       position: idx + 1,
       name: item.name,
-      item: `${baseUrl}${item.path}`,
+      item: `${baseUrl}${item.path === '/' ? '' : item.path}`,
     })),
   };
 }
@@ -166,11 +237,16 @@ export function buildFaqSchema() {
 export function buildArticleSchema(post: BlogPost, baseUrl: string) {
   return {
     '@context': 'https://schema.org',
-    '@type': 'Article',
+    '@type': 'BlogPosting',
     headline: post.title,
     description: post.description,
     datePublished: post.publishedAt,
     author: {
+      '@type': 'Person',
+      name: siteContent.profile.name,
+      url: baseUrl,
+    },
+    publisher: {
       '@type': 'Person',
       name: siteContent.profile.name,
       url: baseUrl,

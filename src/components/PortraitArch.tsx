@@ -42,6 +42,11 @@ export function PortraitArch() {
           <img
             src={siteContent.profile.photoPath}
             alt={siteContent.profile.photoAlt}
+            width={720}
+            height={900}
+            loading="eager"
+            fetchPriority="high"
+            decoding="async"
             onError={() => setImgFailed(true)}
             className="h-full w-full object-cover"
           />

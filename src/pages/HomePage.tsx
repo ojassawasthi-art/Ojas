@@ -14,15 +14,8 @@ import {SeoHead} from '../components/SeoHead';
 import {TestimonialsSection} from '../components/TestimonialsSection';
 import {siteContent} from '../content/site';
 import {useRouter} from '../context/RouterContext';
-import {
-  buildBookSchemas,
-  buildFaqSchema,
-  buildPersonSchema,
-  buildProfessionalServiceSchema,
-  buildProfilePageSchema,
-  buildWebSiteSchema,
-  getCanonicalBaseUrl,
-} from '../lib/seo';
+import {buildPageSeoData} from '../lib/routeSeo';
+import {getCanonicalBaseUrl} from '../lib/seo';
 import type {Project, SiteSettingsMap, Testimonial} from '../types/database';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -118,16 +111,9 @@ export function HomePage({
   };
 
   const baseUrl = getCanonicalBaseUrl();
-  const schemas = useMemo(
-    () => [
-      buildPersonSchema(baseUrl),
-      buildWebSiteSchema(baseUrl),
-      buildProfilePageSchema(baseUrl),
-      buildProfessionalServiceSchema(baseUrl),
-      ...buildBookSchemas(baseUrl),
-      buildFaqSchema(),
-    ],
-    [baseUrl],
+  const seo = useMemo(
+    () => buildPageSeoData('/', baseUrl, publishedProjects),
+    [baseUrl, publishedProjects],
   );
 
   const heroHeadline =
@@ -136,10 +122,11 @@ export function HomePage({
   return (
     <>
       <SeoHead
-        title={siteContent.seo.defaultTitle}
-        description={siteContent.seo.defaultDescription}
+        title={seo.title}
+        description={seo.description}
         path="/"
-        schemas={schemas}
+        ogImage={seo.ogImage}
+        schemas={seo.schemas}
       />
 
       {/* 1. HERO SECTION */}
@@ -397,6 +384,20 @@ export function HomePage({
                 </p>
               </div>
             ))}
+          </div>
+
+          <div className="mt-10 flex justify-end">
+            <a
+              href="/services"
+              onClick={(e) => {
+                e.preventDefault();
+                navigate('/services');
+              }}
+              className="group inline-flex items-center gap-1.5 text-sm font-medium text-[var(--text)] transition-colors hover:text-[var(--accent-text)]"
+            >
+              <span>Explore services &amp; stack</span>
+              <AnimatedArrow />
+            </a>
           </div>
         </div>
       </section>

@@ -1,13 +1,16 @@
 import {ArrowUpRight, Check, Copy} from 'lucide-react';
 import {useState} from 'react';
 import {JourneyTimeline} from '../components/JourneyTimeline';
+import {AnimatedArrow} from '../components/MagneticButton';
 import {PortraitArch} from '../components/PortraitArch';
 import {SeoHead} from '../components/SeoHead';
 import {siteContent} from '../content/site';
+import {useRouter} from '../context/RouterContext';
 import {buildPageSeoData} from '../lib/routeSeo';
 import {getCanonicalBaseUrl} from '../lib/seo';
 
 export function AboutPage() {
+  const {navigate} = useRouter();
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const baseUrl = getCanonicalBaseUrl();
   const seo = buildPageSeoData('/about', baseUrl, []);
@@ -18,7 +21,7 @@ export function AboutPage() {
       setCopiedId(id);
       setTimeout(() => setCopiedId(null), 2000);
     } catch {
-      // Ignore
+      // Clipboard blocked
     }
   };
 
@@ -34,16 +37,17 @@ export function AboutPage() {
 
       <section className="pt-32 pb-20">
         <div className="mx-auto max-w-[1200px] px-6">
+          {/* 1. Who is Ojas Awasthi */}
           <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12">
             <div className="lg:col-span-7">
               <p className="text-xs tracking-widest text-[var(--accent-text)]">
-                Profile
+                Profile · <span lang="hi">{siteContent.profile.hindiName}</span>
               </p>
               <h1 className="mt-2 font-serif-display text-5xl tracking-tight text-[var(--text)] sm:text-7xl">
-                {siteContent.profile.name}
+                Who is {siteContent.profile.name}?
               </h1>
               <p className="mt-4 text-sm text-[var(--muted)]">
-                {siteContent.profile.linkedinHeadline}
+                {siteContent.profile.siteHeadline}
               </p>
 
               <div className="mt-8 space-y-5 text-base leading-relaxed text-[var(--text)]">
@@ -58,70 +62,152 @@ export function AboutPage() {
             </div>
           </div>
 
-          {/* Education, Languages, Interests */}
+          {/* 2. School, 3. University of Lucknow, 4. CS Preparation */}
           <div className="mt-20 grid grid-cols-1 gap-8 border-t border-[var(--border)] pt-16 md:grid-cols-3">
-            <div>
+            <section>
               <h2 className="font-serif-display text-3xl text-[var(--text)]">
-                Education
+                School (St. Xavier&apos;s, Gonda)
               </h2>
-              <div className="mt-6 space-y-6">
-                {siteContent.education.map((edu) => (
-                  <div key={edu.institution}>
-                    <p className="font-mono-tabular text-xs text-[var(--muted)]">
-                      {edu.period}
-                    </p>
-                    <p className="mt-1 text-base font-medium text-[var(--text)]">
-                      {edu.institution}
-                    </p>
-                    <p className="mt-0.5 text-sm text-[var(--muted)]">
-                      {edu.degree}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <h2 className="font-serif-display text-3xl text-[var(--text)]">
-                Languages
-              </h2>
-              <div className="mt-6 space-y-4">
-                {siteContent.profile.languages.map((lang) => (
-                  <div key={lang.name}>
-                    <p className="text-base font-medium text-[var(--text)]">
-                      {lang.name}
-                    </p>
-                    <p className="text-sm text-[var(--muted)]">
-                      {lang.proficiency}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <h2 className="font-serif-display text-3xl text-[var(--text)]">
-                Focus areas
-              </h2>
-              <p className="mt-6 text-sm leading-relaxed text-[var(--muted)]">
-                {siteContent.profile.interests.join(' · ')}
+              <p className="font-mono-tabular mt-4 text-xs text-[var(--accent-text)]">
+                Apr 2017 – Mar 2026 · Grade 12
               </p>
-            </div>
+              <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
+                Completed schooling through Grade 12 at St. Xavier&apos;s High
+                School, Gonda, Uttar Pradesh while building early digital and
+                e-commerce projects.
+              </p>
+            </section>
+
+            <section>
+              <h2 className="font-serif-display text-3xl text-[var(--text)]">
+                University of Lucknow
+              </h2>
+              <p className="font-mono-tabular mt-4 text-xs text-[var(--accent-text)]">
+                Aug 2026 – Present · B.Com
+              </p>
+              <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
+                Pursuing a Bachelor of Commerce (B.Com) in Accounting &amp;
+                Finance and E-commerce at the University of Lucknow.
+              </p>
+            </section>
+
+            <section>
+              <h2 className="font-serif-display text-3xl text-[var(--text)]">
+                Company Secretary (CS) Preparation
+              </h2>
+              <p className="font-mono-tabular mt-4 text-xs text-[var(--accent-text)]">
+                CS Aspirant
+              </p>
+              <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
+                Actively preparing for the Company Secretary (CS) examinations
+                with focus on corporate governance, law, and finance. Currently a
+                student preparing for the exams and not yet a qualified CS.
+              </p>
+            </section>
           </div>
 
-          {/* Journey */}
+          {/* 5. Web Development, 6. Digital Marketing & SEO, 7. Books & Writing */}
+          <div className="mt-16 grid grid-cols-1 gap-8 border-t border-[var(--border)] pt-16 md:grid-cols-3">
+            <section>
+              <h2 className="font-serif-display text-3xl text-[var(--text)]">
+                Web Development
+              </h2>
+              <p className="mt-4 text-sm leading-relaxed text-[var(--muted)]">
+                Freelance web developer in Lucknow designing and building fast,
+                responsive websites using React, Next.js, Tailwind CSS, and
+                Supabase, including published projects such as Nutstridinida.
+              </p>
+              <a
+                href="/services"
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate('/services');
+                }}
+                className="group mt-4 inline-flex items-center gap-1.5 text-xs font-medium text-[var(--accent-text)]"
+              >
+                <span>View web services</span>
+                <AnimatedArrow />
+              </a>
+            </section>
+
+            <section>
+              <h2 className="font-serif-display text-3xl text-[var(--text)]">
+                Digital Marketing &amp; SEO
+              </h2>
+              <p className="mt-4 text-sm leading-relaxed text-[var(--muted)]">
+                Certified in Digital Marketing by HubSpot Academy, applying
+                inbound strategy, technical SEO architecture, clean HTML
+                semantics, and analytics in real brand builds.
+              </p>
+              <a
+                href="/work"
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate('/work');
+                }}
+                className="group mt-4 inline-flex items-center gap-1.5 text-xs font-medium text-[var(--accent-text)]"
+              >
+                <span>View selected work</span>
+                <AnimatedArrow />
+              </a>
+            </section>
+
+            <section>
+              <h2 className="font-serif-display text-3xl text-[var(--text)]">
+                Books &amp; Writing
+              </h2>
+              <p className="mt-4 text-sm leading-relaxed text-[var(--muted)]">
+                Published two books: Mastering the Art of Manipulation:
+                Psychology behind Manipulation on Amazon Kindle (Mar 27, 2026)
+                and The Echoes of Love on Amazon and Google Play Books.
+              </p>
+              <a
+                href="/books"
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate('/books');
+                }}
+                className="group mt-4 inline-flex items-center gap-1.5 text-xs font-medium text-[var(--accent-text)]"
+              >
+                <span>Explore published books</span>
+                <AnimatedArrow />
+              </a>
+            </section>
+          </div>
+
+          {/* 8. The Vaxn Store & Journey */}
           <div className="mt-20 border-t border-[var(--border)] pt-16">
             <h2 className="font-serif-display text-4xl tracking-tight text-[var(--text)]">
-              Journey
+              The Vaxn Store &amp; Experience
             </h2>
+            <p className="mt-3 max-w-3xl text-sm leading-relaxed text-[var(--muted)]">
+              From September 2020 to April 2024, Ojas founded and operated VAXN
+              Fashion / The Vaxn Store with two friends—running SEO, hosting,
+              and promotions solo across dropshipping and thrifted luxury
+              menswear to thousands of sales before closing by choice to uphold
+              product quality.
+            </p>
             <JourneyTimeline />
           </div>
 
-          {/* Certifications */}
+          {/* 9. Certifications */}
           <div className="mt-20 border-t border-[var(--border)] pt-16">
-            <h2 className="font-serif-display text-4xl tracking-tight text-[var(--text)]">
-              Certifications
-            </h2>
+            <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+              <h2 className="font-serif-display text-4xl tracking-tight text-[var(--text)]">
+                Certifications
+              </h2>
+              <a
+                href="/education"
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate('/education');
+                }}
+                className="group inline-flex items-center gap-1.5 text-xs font-medium text-[var(--accent-text)]"
+              >
+                <span>Full education &amp; credentials page</span>
+                <AnimatedArrow />
+              </a>
+            </div>
             <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-3">
               {siteContent.certifications.map((cert) => (
                 <article
@@ -187,14 +273,65 @@ export function AboutPage() {
             </div>
           </div>
 
-          {/* Frequently Asked Questions */}
+          {/* 10. Languages & 11. Contact */}
+          <div className="mt-20 grid grid-cols-1 gap-8 border-t border-[var(--border)] pt-16 md:grid-cols-2">
+            <section>
+              <h2 className="font-serif-display text-3xl text-[var(--text)]">
+                Languages
+              </h2>
+              <div className="mt-6 space-y-4">
+                {siteContent.profile.languages.map((lang) => (
+                  <div key={lang.name}>
+                    <p className="text-base font-medium text-[var(--text)]">
+                      {lang.name}
+                    </p>
+                    <p className="text-sm text-[var(--muted)]">
+                      {lang.proficiency}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section>
+              <h2 className="font-serif-display text-3xl text-[var(--text)]">
+                Contact
+              </h2>
+              <p className="mt-6 text-sm leading-relaxed text-[var(--muted)]">
+                Based in {siteContent.profile.location}. Always open to
+                connecting around web development, digital marketing, law,
+                finance, and publishing.
+              </p>
+              <div className="mt-5 flex flex-wrap gap-5 text-sm">
+                <a
+                  href={`mailto:${siteContent.contact.email}`}
+                  className="font-medium text-[var(--text)] underline decoration-[var(--accent)] underline-offset-4"
+                >
+                  {siteContent.contact.email}
+                </a>
+                <a
+                  href="/contact"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/contact');
+                  }}
+                  className="group inline-flex items-center gap-1.5 font-medium text-[var(--accent-text)]"
+                >
+                  <span>Open contact form</span>
+                  <AnimatedArrow />
+                </a>
+              </div>
+            </section>
+          </div>
+
+          {/* Frequently Asked Questions (All 13 items) */}
           <div className="mt-20 border-t border-[var(--border)] pt-16">
             <h2 className="font-serif-display text-4xl tracking-tight text-[var(--text)]">
               Common questions
             </h2>
             <dl className="mt-8 divide-y divide-[var(--border)] rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-7">
               {siteContent.faqs.map((faq) => (
-                <div key={faq.question} className="py-6">
+                <div key={faq.question} className="py-6" lang={faq.lang}>
                   <dt className="font-serif-display text-2xl text-[var(--text)]">
                     {faq.question}
                   </dt>
@@ -205,6 +342,12 @@ export function AboutPage() {
               ))}
             </dl>
           </div>
+
+          {siteContent.profile.showFatherOnPage && (
+            <p className="mt-10 text-xs text-[var(--muted)]">
+              Son of {siteContent.profile.fatherName}.
+            </p>
+          )}
         </div>
       </section>
     </>

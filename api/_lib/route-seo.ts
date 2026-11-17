@@ -22,25 +22,48 @@ function escapeHtml(input: string): string {
 function fitDescription(text: string): string {
   const clean = text.replace(/\s+/g, ' ').trim();
   if (clean.length <= 160) return clean;
-  return `${clean.slice(0, 157).trimEnd()}...`;
+  const sliced = clean.slice(0, 157);
+  const lastSpace = sliced.lastIndexOf(' ');
+  return `${(lastSpace > 120 ? sliced.slice(0, lastSpace) : sliced).trimEnd()}...`;
 }
 
+const PERSON_KNOWS_ABOUT = [
+  'Web Development',
+  'React',
+  'Next.js',
+  'Tailwind CSS',
+  'Supabase',
+  'SEO',
+  'Digital Marketing',
+  'Corporate Governance',
+  'Company Secretary Studies',
+  'Securities Markets',
+  'Human Psychology',
+];
+
 export function getPersonSchema(baseUrl: string) {
+  const sameAs = [
+    ...siteData.contact.socials
+      .filter((s) => s.url.startsWith('http'))
+      .map((s) => s.url),
+    ...siteData.profile.authorProfiles,
+  ];
+
   return {
     '@context': 'https://schema.org',
     '@type': 'Person',
     name: siteData.profile.name,
-    alternateName: siteData.profile.alternateName,
+    alternateName: ['Ojas', 'ओजस अवस्थी', 'Ojas Awasthy'],
     jobTitle: 'Web Developer, Digital Marketer & Published Author',
     description: siteData.profile.siteHeadline,
     url: baseUrl,
-    image: `${baseUrl}/og-image.png`,
+    image: `${baseUrl}${siteData.profile.photoPath}`,
     email: `mailto:${siteData.contact.email}`,
     address: {
       '@type': 'PostalAddress',
       addressLocality: 'Lucknow',
       addressRegion: 'Uttar Pradesh',
-      addressCountry: 'India',
+      addressCountry: 'IN',
     },
     alumniOf: [
       {
@@ -49,14 +72,48 @@ export function getPersonSchema(baseUrl: string) {
       },
       {
         '@type': 'HighSchool',
-        name: "St. Xavier's High School, India",
+        name: "St. Xavier's High School, Gonda",
       },
     ],
-    knowsAbout: [...siteData.skillsMarquee, ...siteData.profile.interests],
+    parent: {
+      '@type': 'Person',
+      name: siteData.profile.fatherName,
+    },
+    hasCredential: [
+      {
+        '@type': 'EducationalOccupationalCredential',
+        name: 'Data Science and Analytics',
+        credentialCategory: 'certificate',
+        recognizedBy: {
+          '@type': 'Organization',
+          name: 'HP LIFE',
+        },
+        url: 'https://www.life-global.org/certificate/aac4e2bf-629f-454d-aae2-36d3f8e7b3ae',
+      },
+      {
+        '@type': 'EducationalOccupationalCredential',
+        name: 'Digital Marketing',
+        credentialCategory: 'certificate',
+        recognizedBy: {
+          '@type': 'Organization',
+          name: 'HubSpot Academy',
+        },
+        url: 'https://app-na2.hubspot.com/academy/achievements/5czcf8hb/en/1/ojas-awasthi/digital-marketing',
+      },
+      {
+        '@type': 'EducationalOccupationalCredential',
+        name: 'NISM Series XXI-A: Securities Market Foundation',
+        credentialCategory: 'certificate',
+        identifier: 'NISM20260000393507-001',
+        recognizedBy: {
+          '@type': 'Organization',
+          name: 'National Institute of Securities Markets',
+        },
+      },
+    ],
+    knowsAbout: PERSON_KNOWS_ABOUT,
     knowsLanguage: ['English', 'French'],
-    sameAs: siteData.contact.socials
-      .filter((s) => s.url.startsWith('http'))
-      .map((s) => s.url),
+    sameAs,
   };
 }
 
@@ -64,7 +121,8 @@ export function getWebSiteSchema(baseUrl: string) {
   return {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    name: `${siteData.profile.name} — Web Developer & Digital Strategist`,
+    name: `${siteData.profile.name} — Web Developer & Author`,
+    alternateName: ['Ojas Awasthi', 'ओजस अवस्थी', 'Ojas Awasthy'],
     url: baseUrl,
     inLanguage: 'en-IN',
     author: {
@@ -83,25 +141,67 @@ export function getProfilePageSchema(baseUrl: string) {
   };
 }
 
-export function getBookSchemas(baseUrl: string) {
-  return siteData.books.map((book) => ({
+export function getProfessionalServiceSchema(baseUrl: string) {
+  return {
     '@context': 'https://schema.org',
-    '@type': 'Book',
-    name: book.subtitle ? `${book.title}: ${book.subtitle}` : book.title,
-    author: {
+    '@type': 'ProfessionalService',
+    name: `${siteData.profile.name} — Web Development & Digital Marketing`,
+    url: `${baseUrl}/services`,
+    areaServed: [
+      {
+        '@type': 'City',
+        name: 'Lucknow',
+      },
+      {
+        '@type': 'Country',
+        name: 'India',
+      },
+    ],
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: 'Lucknow',
+      addressRegion: 'Uttar Pradesh',
+      addressCountry: 'IN',
+    },
+    founder: {
       '@type': 'Person',
-      name: book.author,
-      url: baseUrl,
+      name: siteData.profile.name,
     },
-    publisher: {
-      '@type': 'Organization',
-      name: book.publisher,
-    },
-    ...(book.publishedDate ? {datePublished: book.publishedDate} : {}),
-    description: book.description,
-    url: book.buyUrl || book.links[0]?.url || `${baseUrl}/books`,
-    sameAs: book.links.map((l) => l.url),
-  }));
+    serviceType: siteData.services.map((s) => s.title),
+  };
+}
+
+export function getBookSchemas(baseUrl: string) {
+  return siteData.books.map((book) => {
+    const resolvedUrl = book.buyUrl || book.links[0]?.url || `${baseUrl}/books`;
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'Book',
+      name: book.subtitle ? `${book.title}: ${book.subtitle}` : book.title,
+      author: {
+        '@type': 'Person',
+        name: book.author,
+        url: baseUrl,
+      },
+      publisher: {
+        '@type': 'Organization',
+        name: book.publisher,
+      },
+      ...(book.publishedDate ? {datePublished: book.publishedDate} : {}),
+      description: book.description,
+      url: resolvedUrl,
+      sameAs: book.links.map((l) => l.url),
+      ...(book.buyUrl
+        ? {
+            offers: {
+              '@type': 'Offer',
+              availability: 'https://schema.org/InStock',
+              url: book.buyUrl,
+            },
+          }
+        : {}),
+    };
+  });
 }
 
 export function getFaqSchema() {
@@ -139,10 +239,13 @@ function renderShell(innerHtml: string): string {
   return `<div class="min-h-screen bg-[#FAFAF8] text-[#0A0A0A] dark:bg-[#0A0A0A] dark:text-[#F5F5F2]">
   <header class="mx-auto flex h-16 max-w-[1200px] items-center justify-between px-6">
     <a href="/">OA</a>
-    <nav aria-label="Primary" class="flex gap-6 text-sm">
+    <nav aria-label="Primary" class="flex flex-wrap gap-6 text-sm">
       <a href="/work">Work</a>
       <a href="/about">About</a>
+      <a href="/education">Education</a>
+      <a href="/services">Services</a>
       <a href="/books">Books</a>
+      <a href="/blog">Articles</a>
       <a href="/contact">Contact</a>
     </nav>
   </header>
@@ -150,7 +253,7 @@ function renderShell(innerHtml: string): string {
     ${innerHtml}
   </main>
   <footer class="mx-auto max-w-[1200px] border-t border-[#E8E8E4] px-6 py-8 text-xs">
-    <span>© 2026 ${escapeHtml(siteData.profile.name)} · ${escapeHtml(siteData.profile.location)}</span>
+    <span>Official website of ${escapeHtml(siteData.profile.name)} · ${escapeHtml(siteData.profile.location)}</span>
   </footer>
 </div>`;
 }
@@ -177,6 +280,7 @@ export function buildPageSeoData(
         getPersonSchema(cleanUrl),
         getWebSiteSchema(cleanUrl),
         getProfilePageSchema(cleanUrl),
+        getProfessionalServiceSchema(cleanUrl),
         ...getBookSchemas(cleanUrl),
         getFaqSchema(),
       ],
@@ -191,6 +295,39 @@ export function buildPageSeoData(
     };
   }
 
+  if (route === '/work') {
+    return {
+      statusCode: 200,
+      title: 'Web Development Projects by Ojas Awasthi',
+      description:
+        'Selected web development and e-commerce work by Ojas Awasthi in Lucknow, India, including Nutstridinida and The Vaxn Store case studies and live links.',
+      canonical: `${cleanUrl}/work`,
+      ogImage: defaultOgImage,
+      noIndex: false,
+      schemas: [
+        getBreadcrumbSchema(
+          [
+            {name: 'Home', path: '/'},
+            {name: 'Work', path: '/work'},
+          ],
+          cleanUrl,
+        ),
+      ],
+      bodyHtml: renderShell(`
+        <nav aria-label="Breadcrumb"><a href="/">Home</a> / <span>Work</span></nav>
+        <h1>Web Development Projects by ${escapeHtml(siteData.profile.name)}</h1>
+        <ul>
+          ${publishedProjects
+            .map(
+              (p) =>
+                `<li><a href="/work/${escapeHtml(p.slug)}">${escapeHtml(p.title)}</a> — ${escapeHtml(p.description)}</li>`,
+            )
+            .join('')}
+        </ul>
+      `),
+    };
+  }
+
   if (route.startsWith('/work/')) {
     const slug = route.slice('/work/'.length);
     const project = publishedProjects.find((p) => p.slug === slug);
@@ -199,11 +336,11 @@ export function buildPageSeoData(
     }
 
     const rawDesc =
-      project.description.length >= 140
+      project.description.length >= 145
         ? project.description
         : `${project.title} — Case study and ${project.category.toLowerCase()} project (${project.year}) designed and developed by Ojas Awasthi in Lucknow, India. View overview and live link.`;
     const description = fitDescription(rawDesc);
-    const title = `${project.title} — Case Study | ${siteData.profile.name}`;
+    const title = `${project.title} | Case Study by ${siteData.profile.name}`;
     const ogImage = project.thumbnail_url || defaultOgImage;
 
     return {
@@ -265,11 +402,16 @@ export function buildPageSeoData(
       schemas: [
         {
           '@context': 'https://schema.org',
-          '@type': 'Article',
+          '@type': 'BlogPosting',
           headline: post.title,
           description: post.description,
           datePublished: post.publishedAt,
           author: {
+            '@type': 'Person',
+            name: siteData.profile.name,
+            url: cleanUrl,
+          },
+          publisher: {
             '@type': 'Person',
             name: siteData.profile.name,
             url: cleanUrl,
@@ -286,14 +428,17 @@ export function buildPageSeoData(
         ),
       ],
       bodyHtml: renderShell(`
-        <h1>${escapeHtml(post.title)}</h1>
-        <p>${escapeHtml(post.description)}</p>
-        ${post.sections
-          .map(
-            (s) =>
-              `<section><h2>${escapeHtml(s.heading)}</h2>${s.paragraphs.map((p) => `<p>${escapeHtml(p)}</p>`).join('')}</section>`,
-          )
-          .join('')}
+        <nav aria-label="Breadcrumb"><a href="/">Home</a> / <a href="/blog">Articles</a> / <span>${escapeHtml(post.title)}</span></nav>
+        <article>
+          <h1>${escapeHtml(post.title)}</h1>
+          <p>${escapeHtml(post.description)}</p>
+          ${post.sections
+            .map(
+              (s) =>
+                `<section><h2>${escapeHtml(s.heading)}</h2>${s.paragraphs.map((p) => `<p>${escapeHtml(p)}</p>`).join('')}</section>`,
+            )
+            .join('')}
+        </article>
       `),
     };
   }

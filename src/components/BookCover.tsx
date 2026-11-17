@@ -53,7 +53,11 @@ export function BookCover({
       {coverImage && !imgError ? (
         <img
           src={coverImage}
-          alt={`${title} book cover`}
+          alt={`${title} by ${author} book cover`}
+          width={520}
+          height={693}
+          loading="lazy"
+          decoding="async"
           referrerPolicy="no-referrer"
           onError={() => setImgError(true)}
           className="h-full w-full object-cover"

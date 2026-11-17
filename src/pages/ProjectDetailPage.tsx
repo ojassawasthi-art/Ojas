@@ -242,6 +242,10 @@ export function ProjectDetailPage({
                     <img
                       src={imgUrl}
                       alt={`${project.title} — showcase image ${idx + 2} by Ojas Awasthi`}
+                      width={1200}
+                      height={750}
+                      loading="lazy"
+                      decoding="async"
                       referrerPolicy="no-referrer"
                       className="aspect-[16/10] w-full object-cover"
                     />

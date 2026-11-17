@@ -17,9 +17,13 @@ import {AdminPage} from './pages/AdminPage';
 import {BlogPage} from './pages/BlogPage';
 import {BooksPage} from './pages/BooksPage';
 import {ContactPage} from './pages/ContactPage';
+import {EducationPage} from './pages/EducationPage';
 import {HomePage} from './pages/HomePage';
+import {LinksPage} from './pages/LinksPage';
 import {NotFoundPage} from './pages/NotFoundPage';
+import {PressKitPage} from './pages/PressKitPage';
 import {ProjectDetailPage} from './pages/ProjectDetailPage';
+import {ServicesPage} from './pages/ServicesPage';
 import {WorkPage} from './pages/WorkPage';
 
 function AppShell() {
@@ -76,8 +80,20 @@ function AppShell() {
     if (pathname === '/about') {
       return <AboutPage />;
     }
+    if (pathname === '/education') {
+      return <EducationPage />;
+    }
+    if (pathname === '/services') {
+      return <ServicesPage />;
+    }
     if (pathname === '/books') {
       return <BooksPage />;
+    }
+    if (pathname === '/press-kit') {
+      return <PressKitPage />;
+    }
+    if (pathname === '/links') {
+      return <LinksPage />;
     }
     if (pathname === '/contact') {
       return <ContactPage />;

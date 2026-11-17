@@ -11,6 +11,12 @@ const LETTERS = 'OJAS AWASTHI'.split('');
 export function LoadingCurtain({onComplete}: LoadingCurtainProps) {
   const [shouldShow, setShouldShow] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
+    const isCrawler =
+      Boolean(navigator.webdriver) ||
+      /bot|googlebot|crawler|spider|bingbot|lighthouse|pagespeed|duckduckbot|yandex|baiduspider|slurp|headless/i.test(
+        navigator.userAgent || '',
+      );
+    if (isCrawler) return false;
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduced) return false;
     try {

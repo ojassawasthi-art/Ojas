@@ -11,13 +11,19 @@
   },
   "headers": [
     {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex" }
+      ]
+    },
+    {
       "source": "/assets/(.*)",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
       ]
     },
     {
-      "source": "/(og-image\\.png|apple-touch-icon\\.png|favicon\\.svg|favicon\\.ico|robots\\.txt|manifest\\.webmanifest)",
+      "source": "/(og-image\\.png|apple-touch-icon\\.png|favicon\\.svg|favicon\\.ico|robots\\.txt|llms\\.txt|manifest\\.webmanifest)",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" }
       ]
@@ -42,6 +48,6 @@
     { "source": "/api/((?!index).*)", "destination": "/api/index?__route=/api/$1" },
     { "source": "/work/:slug", "destination": "/api/index?__route=/work/:slug" },
     { "source": "/blog/:slug", "destination": "/api/index?__route=/blog/:slug" },
-    { "source": "/((?!api/|sitemap\\.xml$).*)", "destination": "/index.html" }
+    { "source": "/((?!api/|sitemap\\.xml$|robots\\.txt$|llms\\.txt$|favicon\\.|images/|assets/).*)", "destination": "/index.html" }
   ]
 }

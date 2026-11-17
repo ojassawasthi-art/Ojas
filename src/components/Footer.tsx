@@ -90,6 +90,7 @@ export function Footer() {
               {siteContent.profile.name}
             </a>
             <p className="mt-3 max-w-sm text-sm leading-relaxed text-[var(--muted)]">
+              Official website of {siteContent.profile.name}.{' '}
               {siteContent.profile.siteHeadline}
             </p>
             <p className="mt-4 text-xs text-[var(--muted)]">
@@ -99,12 +100,17 @@ export function Footer() {
 
           <div className="md:col-span-3">
             <p className="text-xs font-medium text-[var(--text)]">Pages</p>
-            <ul className="mt-4 space-y-2.5 text-sm text-[var(--muted)]">
+            <ul className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2.5 text-sm text-[var(--muted)]">
               {[
-                {label: 'Work', path: '/work'},
+                {label: 'Home', path: '/'},
                 {label: 'About', path: '/about'},
+                {label: 'Education', path: '/education'},
+                {label: 'Services', path: '/services'},
+                {label: 'Work', path: '/work'},
                 {label: 'Books', path: '/books'},
                 {label: 'Articles', path: '/blog'},
+                {label: 'Press Kit', path: '/press-kit'},
+                {label: 'Links', path: '/links'},
                 {label: 'Contact', path: '/contact'},
                 {label: 'Admin', path: '/admin'},
               ].map((link) => (

@@ -16,7 +16,21 @@ import type {
   Testimonial,
 } from './src/types/database';
 
-const PORT = Number(process.env.PORT) || 3000;
+function resolveServerPort(): number {
+  const portFlagIdx = process.argv.indexOf('--port');
+  if (portFlagIdx !== -1 && process.argv[portFlagIdx + 1]) {
+    const cliPort = Number(process.argv[portFlagIdx + 1]);
+    if (Number.isFinite(cliPort) && cliPort > 0) return cliPort;
+  }
+  const envPort = Number(process.env.PORT);
+  const nginxPort = Number(process.env.NGINX_PORT);
+  if (Number.isFinite(envPort) && envPort > 0 && envPort !== nginxPort) {
+    return envPort;
+  }
+  return 3000;
+}
+
+const PORT = resolveServerPort();
 const isProd = process.env.NODE_ENV === 'production';
 
 const SUPABASE_URL = (
@@ -746,13 +760,44 @@ async function startServer() {
     const projects = await getPublishedProjects();
     const nowIso = new Date().toISOString();
 
-    const entries = [
-      {loc: '/', lastmod: nowIso, changefreq: 'weekly', priority: '1.0'},
-      {loc: '/work', lastmod: nowIso, changefreq: 'weekly', priority: '0.9'},
+    const entries: {
+      loc: string;
+      lastmod: string;
+      changefreq: string;
+      priority: string;
+      images?: {loc: string; title: string}[];
+    }[] = [
+      {
+        loc: '/',
+        lastmod: nowIso,
+        changefreq: 'weekly',
+        priority: '1.0',
+        images: [
+          {
+            loc: `${baseUrl}/images/ojas.jpg`,
+            title: 'Ojas Awasthi, web developer and author from Lucknow',
+          },
+          {
+            loc: `${baseUrl}/og-image.png`,
+            title: 'Ojas Awasthi — Web Developer, Digital Marketer & Author in Lucknow',
+          },
+        ],
+      },
+      {
+        loc: '/about',
+        lastmod: nowIso,
+        changefreq: 'monthly',
+        priority: '0.9',
+        images: [{loc: `${baseUrl}/images/ojas.jpg`, title: 'Ojas Awasthi portrait'}],
+      },
+      {loc: '/education', lastmod: nowIso, changefreq: 'monthly', priority: '0.8'},
       {loc: '/books', lastmod: nowIso, changefreq: 'monthly', priority: '0.8'},
-      {loc: '/about', lastmod: nowIso, changefreq: 'monthly', priority: '0.8'},
+      {loc: '/services', lastmod: nowIso, changefreq: 'monthly', priority: '0.8'},
+      {loc: '/work', lastmod: nowIso, changefreq: 'weekly', priority: '0.9'},
+      {loc: '/blog', lastmod: nowIso, changefreq: 'weekly', priority: '0.8'},
+      {loc: '/press-kit', lastmod: nowIso, changefreq: 'monthly', priority: '0.7'},
+      {loc: '/links', lastmod: nowIso, changefreq: 'monthly', priority: '0.7'},
       {loc: '/contact', lastmod: nowIso, changefreq: 'monthly', priority: '0.7'},
-      {loc: '/blog', lastmod: nowIso, changefreq: 'monthly', priority: '0.7'},
       ...siteContent.blogPosts.map((b) => {
         const parsed = new Date(b.publishedAt);
         return {
@@ -764,26 +809,39 @@ async function startServer() {
       }),
       ...projects.map((p) => {
         const parsed = p.created_at ? new Date(p.created_at) : new Date(nowIso);
+        const imgs = p.thumbnail_url
+          ? [{loc: p.thumbnail_url, title: `${p.title} by Ojas Awasthi`}]
+          : undefined;
         return {
           loc: `/work/${p.slug}`,
           lastmod: Number.isNaN(parsed.getTime()) ? nowIso : parsed.toISOString(),
           changefreq: 'monthly',
           priority: '0.8',
+          images: imgs,
         };
       }),
     ];
 
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 ${entries
-  .map(
-    (entry) => `  <url>
+  .map((entry) => {
+    const imgTags = (entry.images || [])
+      .map(
+        (img) => `    <image:image>
+      <image:loc>${escapeHtml(img.loc)}</image:loc>
+      <image:title>${escapeHtml(img.title)}</image:title>
+    </image:image>`,
+      )
+      .join('\n');
+    return `  <url>
     <loc>${escapeHtml(`${baseUrl}${entry.loc === '/' ? '' : entry.loc}`)}</loc>
     <lastmod>${entry.lastmod}</lastmod>
     <changefreq>${entry.changefreq}</changefreq>
-    <priority>${entry.priority}</priority>
-  </url>`,
-  )
+    <priority>${entry.priority}</priority>${imgTags ? `\n${imgTags}` : ''}
+  </url>`;
+  })
   .join('\n')}
 </urlset>`;
 
@@ -795,7 +853,7 @@ ${entries
     const baseUrl = getBaseUrl(req);
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
     res.send(
-      `User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api\n\nSitemap: ${baseUrl}/sitemap.xml\n`,
+      `User-agent: *\nAllow: /\nDisallow: /admin\n\nSitemap: ${baseUrl}/sitemap.xml\n`,
     );
   });
 

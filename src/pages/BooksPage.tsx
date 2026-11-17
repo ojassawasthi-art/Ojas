@@ -1,11 +1,14 @@
 import {ArrowUpRight} from 'lucide-react';
 import {BookCover} from '../components/BookCover';
+import {AnimatedArrow} from '../components/MagneticButton';
 import {SeoHead} from '../components/SeoHead';
 import {siteContent} from '../content/site';
+import {useRouter} from '../context/RouterContext';
 import {buildPageSeoData} from '../lib/routeSeo';
 import {getCanonicalBaseUrl} from '../lib/seo';
 
 export function BooksPage() {
+  const {navigate} = useRouter();
   const baseUrl = getCanonicalBaseUrl();
   const seo = buildPageSeoData('/books', baseUrl, []);
 
@@ -104,6 +107,40 @@ export function BooksPage() {
                 </article>
               );
             })}
+          </div>
+
+          {/* About the Author */}
+          <div className="mt-16 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-8 sm:p-10">
+            <h2 className="font-serif-display text-3xl text-[var(--text)]">
+              About the author
+            </h2>
+            <p className="mt-3 max-w-3xl text-sm leading-relaxed text-[var(--muted)]">
+              {siteContent.pressKit.bio50}
+            </p>
+            <div className="mt-6 flex flex-wrap gap-6 text-xs font-medium text-[var(--text)]">
+              <a
+                href="/about"
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate('/about');
+                }}
+                className="group inline-flex items-center gap-1.5 hover:text-[var(--accent-text)]"
+              >
+                <span>Read full biography</span>
+                <AnimatedArrow />
+              </a>
+              <a
+                href="/blog/why-i-wrote-the-echoes-of-love"
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate('/blog/why-i-wrote-the-echoes-of-love');
+                }}
+                className="group inline-flex items-center gap-1.5 hover:text-[var(--accent-text)]"
+              >
+                <span>Read: Why I wrote The Echoes of Love</span>
+                <AnimatedArrow />
+              </a>
+            </div>
           </div>
         </div>
       </section>
