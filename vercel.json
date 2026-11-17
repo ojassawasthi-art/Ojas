@@ -17,7 +17,7 @@
       ]
     },
     {
-      "source": "/(og-image\\.png|apple-touch-icon\\.png|favicon\\.svg|manifest\\.webmanifest)",
+      "source": "/(og-image\\.png|apple-touch-icon\\.png|favicon\\.svg|favicon\\.ico|robots\\.txt|manifest\\.webmanifest)",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" }
       ]
@@ -38,11 +38,10 @@
     }
   ],
   "rewrites": [
-    { "source": "/robots.txt", "destination": "/api/index?__route=/robots.txt" },
     { "source": "/sitemap.xml", "destination": "/api/index?__route=/sitemap.xml" },
     { "source": "/api/((?!index).*)", "destination": "/api/index?__route=/api/$1" },
     { "source": "/work/:slug", "destination": "/api/index?__route=/work/:slug" },
     { "source": "/blog/:slug", "destination": "/api/index?__route=/blog/:slug" },
-    { "source": "/(.*)", "destination": "/api/index?__route=/404" }
+    { "source": "/((?!api/|sitemap\\.xml$).*)", "destination": "/index.html" }
   ]
 }

@@ -2,8 +2,7 @@ import {createClient, type SupabaseClient} from '@supabase/supabase-js';
 import crypto from 'node:crypto';
 import type {IncomingMessage, ServerResponse} from 'node:http';
 import {Resend} from 'resend';
-import {siteContent} from '../../src/content/site';
-import type {Project, SiteSettingsMap} from '../../src/types/database';
+import {siteData, type Project, type SiteSettingsMap} from './site-data.js';
 
 export interface ApiRequest extends IncomingMessage {
   body?: unknown;
@@ -16,42 +15,68 @@ export interface ApiResponse extends ServerResponse {
   send?: (body: string) => void;
 }
 
-const SUPABASE_URL = (
-  process.env.VITE_SUPABASE_URL ||
-  process.env.NEXT_PUBLIC_SUPABASE_URL ||
-  process.env.SUPABASE_URL ||
-  'https://hdryciyvkhozomertslx.supabase.co'
-)
-  .trim()
-  .replace(/\/rest\/v1\/?$/i, '')
-  .replace(/\/+$/, '');
-const SUPABASE_SERVICE_ROLE_KEY = (
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-).trim();
-const RESEND_API_KEY = (process.env.RESEND_API_KEY || '').trim();
+export interface SupabaseAdminResolution {
+  supabase: SupabaseClient | null;
+  missingVars: string[];
+}
 
-export const ADMIN_EMAIL = (
-  process.env.ADMIN_EMAIL ||
-  process.env.VITE_ADMIN_EMAIL ||
-  'ojassawasthi@gmail.com'
-)
-  .trim()
-  .toLowerCase();
+/**
+ * Lazily resolve Supabase credentials and instantiate client per request
+ * so missing environment variables never crash at module initialization.
+ */
+export function getSupabaseAdmin(): SupabaseAdminResolution {
+  const rawUrl = (
+    process.env.VITE_SUPABASE_URL ||
+    process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    process.env.SUPABASE_URL ||
+    ''
+  ).trim();
+  const supabaseUrl = rawUrl
+    .replace(/\/rest\/v1\/?$/i, '')
+    .replace(/\/+$/, '');
+  const serviceRoleKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
 
-export const isSupabaseAdminReady = Boolean(
-  SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY,
-);
+  const missingVars: string[] = [];
+  if (!supabaseUrl) {
+    missingVars.push('VITE_SUPABASE_URL (or NEXT_PUBLIC_SUPABASE_URL)');
+  }
+  if (!serviceRoleKey) {
+    missingVars.push('SUPABASE_SERVICE_ROLE_KEY');
+  }
 
-export const supabaseAdmin: SupabaseClient | null = isSupabaseAdminReady
-  ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-      auth: {persistSession: false, autoRefreshToken: false},
-    })
-  : null;
+  if (missingVars.length > 0) {
+    return {supabase: null, missingVars};
+  }
 
-// Skip Resend initialization cleanly if RESEND_API_KEY is empty
-export const resend: Resend | null = RESEND_API_KEY
-  ? new Resend(RESEND_API_KEY)
-  : null;
+  const supabase = createClient(supabaseUrl, serviceRoleKey, {
+    auth: {persistSession: false, autoRefreshToken: false},
+  });
+  return {supabase, missingVars: []};
+}
+
+export function getResendClient(): Resend | null {
+  const apiKey = (process.env.RESEND_API_KEY || '').trim();
+  return apiKey ? new Resend(apiKey) : null;
+}
+
+export function getAdminEmail(): string {
+  return (
+    process.env.ADMIN_EMAIL ||
+    process.env.VITE_ADMIN_EMAIL ||
+    siteData.contact.email
+  )
+    .trim()
+    .toLowerCase();
+}
+
+export function getBaseUrl(): string {
+  const configured = (
+    process.env.VITE_SITE_URL ||
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    siteData.seo.siteUrl
+  ).trim();
+  return configured.replace(/\/+$/, '');
+}
 
 export function sendJson(res: ApiResponse, statusCode: number, data: unknown) {
   res.statusCode = statusCode;
@@ -124,81 +149,93 @@ export function hashIp(ip: string): string {
     .slice(0, 24);
 }
 
-export function getBaseUrl(_req?: ApiRequest): string {
-  const configured = (
-    process.env.VITE_SITE_URL ||
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    'https://ojasawasthii.vercel.app'
-  ).trim();
-  return configured.replace(/\/+$/, '');
-}
-
 export async function verifyAdminRequest(
   req: ApiRequest,
   res: ApiResponse,
+  supabase: SupabaseClient | null,
+  missingVars: string[],
 ): Promise<boolean> {
-  if (isSupabaseAdminReady && supabaseAdmin) {
-    const authHeader = String(req.headers.authorization || '');
-    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
-    if (!token) {
-      sendJson(res, 401, {error: 'Missing authentication token.'});
-      return false;
-    }
-    const {data, error} = await supabaseAdmin.auth.getUser(token);
-    if (
-      error ||
-      !data.user?.email ||
-      data.user.email.toLowerCase() !== ADMIN_EMAIL
-    ) {
-      sendJson(res, 403, {error: 'Admin access restricted.'});
-      return false;
-    }
-    return true;
+  if (!supabase) {
+    sendJson(res, 500, {
+      error: `Missing required environment variable(s): ${missingVars.join(', ')}`,
+    });
+    return false;
   }
 
-  sendJson(res, 503, {
-    error:
-      'Supabase server credentials (SUPABASE_SERVICE_ROLE_KEY) are not configured in environment variables.',
-  });
-  return false;
+  const authHeader = String(req.headers.authorization || '');
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+  if (!token) {
+    sendJson(res, 401, {error: 'Missing authentication token.'});
+    return false;
+  }
+
+  const adminEmail = getAdminEmail();
+  const {data, error} = await supabase.auth.getUser(token);
+  if (
+    error ||
+    !data.user?.email ||
+    data.user.email.toLowerCase() !== adminEmail
+  ) {
+    sendJson(res, 403, {error: 'Admin access restricted.'});
+    return false;
+  }
+  return true;
 }
 
-export async function getPublishedProjects(): Promise<Project[]> {
-  if (supabaseAdmin) {
-    const {data, error} = await supabaseAdmin
-      .from('projects')
-      .select('*')
-      .eq('published', true)
-      .order('sort_order', {ascending: true})
-      .order('created_at', {ascending: false});
-    if (!error && Array.isArray(data)) {
-      return data as Project[];
+export async function getPublishedProjects(
+  supabase: SupabaseClient | null,
+): Promise<Project[]> {
+  if (supabase) {
+    try {
+      const {data, error} = await supabase
+        .from('projects')
+        .select('*')
+        .eq('published', true)
+        .order('sort_order', {ascending: true})
+        .order('created_at', {ascending: false});
+      if (!error && Array.isArray(data)) {
+        return data as Project[];
+      }
+      if (error) {
+        console.error('[api] Failed querying projects from Supabase:', error);
+      }
+    } catch (err) {
+      console.error('[api] Exception querying projects from Supabase:', err);
     }
   }
-  return siteContent.fallbackProjects
+  return siteData.fallbackProjects
     .filter((p) => p.published)
     .sort((a, b) => a.sort_order - b.sort_order);
 }
 
-export async function getSiteSettings(): Promise<SiteSettingsMap> {
-  if (supabaseAdmin) {
-    const {data, error} = await supabaseAdmin
-      .from('site_settings')
-      .select('key, value');
-    if (!error && Array.isArray(data) && data.length > 0) {
-      const map: SiteSettingsMap = structuredClone(siteContent.fallbackSettings);
-      for (const row of data) {
-        if (row.key === 'availability' && row.value) {
-          map.availability = row.value as SiteSettingsMap['availability'];
+export async function getSiteSettings(
+  supabase: SupabaseClient | null,
+): Promise<SiteSettingsMap> {
+  if (supabase) {
+    try {
+      const {data, error} = await supabase
+        .from('site_settings')
+        .select('key, value');
+      if (!error && Array.isArray(data) && data.length > 0) {
+        const map: SiteSettingsMap = structuredClone(siteData.fallbackSettings);
+        for (const row of data) {
+          if (row.key === 'availability' && row.value) {
+            map.availability = row.value as SiteSettingsMap['availability'];
+          }
+          if (row.key === 'hero' && row.value) {
+            map.hero = row.value as SiteSettingsMap['hero'];
+          }
         }
-        if (row.key === 'hero' && row.value) {
-          map.hero = row.value as SiteSettingsMap['hero'];
-        }
+        return map;
       }
-      return map;
+      if (error) {
+        console.error('[api] Failed querying site_settings from Supabase:', error);
+      }
+    } catch (err) {
+      console.error('[api] Exception querying site_settings from Supabase:', err);
     }
   }
-  return siteContent.fallbackSettings;
+  return siteData.fallbackSettings;
 }
 
 export function escapeXml(input: string): string {
