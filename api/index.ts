@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {z} from 'zod';
+import {handleChatRequest} from './_lib/chat.js';
 import {buildPageSeoData, injectSeoIntoHtml} from './_lib/route-seo.js';
 import {siteData, type SiteSettingsMap} from './_lib/site-data.js';
 import {
@@ -493,7 +494,15 @@ ${urlEntries
     }
 
     // --------------------------------------------------------------------------
-    // 9. ADMIN ROUTES (Protected by Supabase JWT matching ADMIN_EMAIL)
+    // 9. ASK ABOUT OJAS CHATBOT (GEMINI API)
+    // --------------------------------------------------------------------------
+    if (route === '/api/chat' && method === 'POST') {
+      await handleChatRequest(req, res, supabase);
+      return;
+    }
+
+    // --------------------------------------------------------------------------
+    // 10. ADMIN ROUTES (Protected by Supabase JWT matching ADMIN_EMAIL)
     // --------------------------------------------------------------------------
     if (route.startsWith('/api/admin/')) {
       try {
@@ -779,6 +788,29 @@ ${urlEntries
             return;
           }
           sendJson(res, 200, {views: data || []});
+          return;
+        }
+
+        // /api/admin/chat-logs
+        if (route === '/api/admin/chat-logs' && method === 'GET') {
+          const {data, error} = await supabase
+            .from('chat_logs')
+            .select('id, question, answer, ip_hash, created_at')
+            .order('created_at', {ascending: false})
+            .limit(200);
+          if (error) {
+            console.error('[api/admin/chat-logs GET] Error:', error);
+            if (
+              error.code === '42P01' ||
+              error.message?.toLowerCase().includes('chat_logs')
+            ) {
+              sendJson(res, 200, {logs: [], tableMissing: true});
+              return;
+            }
+            sendJson(res, 500, {error: error.message});
+            return;
+          }
+          sendJson(res, 200, {logs: data || []});
           return;
         }
 

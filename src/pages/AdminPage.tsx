@@ -12,6 +12,7 @@ import {SeoHead} from '../components/SeoHead';
 import {getCanonicalBaseUrl} from '../lib/seo';
 import {ADMIN_EMAIL, isSupabaseConfigured, supabase} from '../lib/supabase';
 import type {
+  ChatLog,
   ContactMessage,
   ContactMessageStatus,
   PageView,
@@ -24,7 +25,13 @@ interface AdminPageProps {
   onDataChanged: () => Promise<void>;
 }
 
-type AdminTab = 'projects' | 'messages' | 'testimonials' | 'analytics' | 'settings';
+type AdminTab =
+  | 'projects'
+  | 'messages'
+  | 'testimonials'
+  | 'analytics'
+  | 'chat'
+  | 'settings';
 
 export function AdminPage({onDataChanged}: AdminPageProps) {
   const [authChecking, setAuthChecking] = useState(true);
@@ -39,6 +46,8 @@ export function AdminPage({onDataChanged}: AdminPageProps) {
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [pageViews, setPageViews] = useState<PageView[]>([]);
+  const [chatLogs, setChatLogs] = useState<ChatLog[]>([]);
+  const [chatTableMissing, setChatTableMissing] = useState(false);
   const [settings, setSettings] = useState<SiteSettingsMap>({
     availability: {enabled: true, text: 'Available for projects'},
     hero: {
@@ -136,11 +145,12 @@ export function AdminPage({onDataChanged}: AdminPageProps) {
     setLoadingData(true);
     try {
       const headers = authHeaders();
-      const [pRes, mRes, tRes, aRes, sRes] = await Promise.all([
+      const [pRes, mRes, tRes, aRes, cRes, sRes] = await Promise.all([
         fetch('/api/admin/projects', {headers}),
         fetch('/api/admin/messages', {headers}),
         fetch('/api/admin/testimonials', {headers}),
         fetch('/api/admin/analytics', {headers}),
+        fetch('/api/admin/chat-logs', {headers}),
         fetch('/api/settings'),
       ]);
 
@@ -159,6 +169,11 @@ export function AdminPage({onDataChanged}: AdminPageProps) {
       if (aRes.ok) {
         const d = await aRes.json();
         setPageViews(d.views || []);
+      }
+      if (cRes.ok) {
+        const d = await cRes.json();
+        setChatLogs(d.logs || []);
+        setChatTableMissing(Boolean(d.tableMissing));
       }
       if (sRes.ok) {
         const d = await sRes.json();
@@ -566,6 +581,7 @@ export function AdminPage({onDataChanged}: AdminPageProps) {
                   label: `Testimonials (${testimonials.length})`,
                 },
                 {id: 'analytics', label: `Analytics (${pageViews.length})`},
+                {id: 'chat', label: `Chat questions (${chatLogs.length})`},
                 {id: 'settings', label: 'Settings'},
               ] as const
             ).map((item) => (
@@ -1013,7 +1029,49 @@ export function AdminPage({onDataChanged}: AdminPageProps) {
             </div>
           )}
 
-          {/* TAB 5: SETTINGS */}
+          {/* TAB 5: CHAT QUESTIONS */}
+          {tab === 'chat' && (
+            <div className="mt-8 space-y-4">
+              {chatTableMissing && (
+                <div className="rounded-xl border border-[var(--accent)]/50 bg-[var(--surface)] px-4 py-3 text-xs text-[var(--text)]">
+                  Run <code className="font-mono-tabular">supabase/migrations/002_chat_tables.sql</code> in the Supabase SQL Editor to persist visitor questions from Ask about Ojas.
+                </div>
+              )}
+
+              {chatLogs.length === 0 ? (
+                <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-10 text-center text-sm text-[var(--muted)]">
+                  No chat questions logged yet.
+                </div>
+              ) : (
+                chatLogs.map((entry) => (
+                  <article
+                    key={entry.id}
+                    className="rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-6"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--muted)]">
+                      <span className="font-mono-tabular">
+                        Visitor {entry.ip_hash ? entry.ip_hash.slice(0, 10) : 'anonymous'}
+                      </span>
+                      <time
+                        dateTime={entry.created_at}
+                        className="font-mono-tabular"
+                      >
+                        {new Date(entry.created_at).toLocaleString()}
+                      </time>
+                    </div>
+                    <p className="mt-3 text-sm font-medium text-[var(--text)]">
+                      {entry.question}
+                    </p>
+                    <p className="mt-2 border-t border-[var(--border)] pt-3 text-sm leading-relaxed whitespace-pre-line text-[var(--muted)]">
+                      {entry.answer}
+                    </p>
+                  </article>
+                ))
+              )}
+            </div>
+          )}
+
+          {/* TAB 6: SETTINGS */}
           {tab === 'settings' && (
             <form
               onSubmit={handleSaveSettings}

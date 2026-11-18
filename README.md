@@ -13,8 +13,8 @@ Personal portfolio website for **Ojas Awasthi** (Web Developer, Digital Marketer
 
 2. **Create a Supabase project**
    - Go to [supabase.com](https://supabase.com) and create a new project.
-   - Open **SQL Editor** and run the full contents of `supabase/migrations/001_initial_schema.sql`. This creates:
-     - Tables: `projects`, `contact_messages`, `testimonials`, `newsletter_subscribers`, `page_views`, `site_settings`
+   - Open **SQL Editor** and run `supabase/migrations/001_initial_schema.sql` and `supabase/migrations/002_chat_tables.sql`. This creates:
+     - Tables: `projects`, `contact_messages`, `testimonials`, `newsletter_subscribers`, `page_views`, `site_settings`, `chat_logs`, `chat_rate_limits`
      - Strict Row Level Security (RLS) policies on every table
      - Public `project-images` storage bucket (5 MB limit, image MIME types only, admin upload)
      - Initial seed rows (`Nutstridinida`, `The Vaxn Store`, `availability`, `hero`)
@@ -39,7 +39,7 @@ Personal portfolio website for **Ojas Awasthi** (Web Developer, Digital Marketer
 
 This project is built for Vercel's **Hobby (free)** plan:
 - **Build & Output**: Uses `vercel.json` (`framework: "vite"`, `buildCommand: "npm run build"`, `outputDirectory: "dist"`). Running `npm run build` compiles Vite and pre-renders static routes (`/`, `/about`, `/education`, `/books`, `/services`, `/work`, `/blog`, all `/blog/<slug>` articles, `/press-kit`, `/links`, `/contact`, `/admin`, `/404`) into HTML with full `<head>` metadata and crawler-visible content.
-- **Single Serverless Function**: All routes (`/api/projects`, `/api/contact`, `/api/newsletter`, `/api/testimonials`, `/api/settings`, `/api/analytics`, `/sitemap.xml`, `/api/admin/*`, plus dynamic `/work/[slug]` SSR metadata and HTTP 404 handling) are merged into one serverless handler (`api/index.ts`) via `vercel.json` rewrites, keeping the deployment well under Vercel Hobby's 12-function limit. Static files (`robots.txt`, `llms.txt`, `favicon.*`, `images/*`) are served directly without hitting serverless functions.
+- **Single Serverless Function**: All routes (`/api/projects`, `/api/chat`, `/api/contact`, `/api/newsletter`, `/api/testimonials`, `/api/settings`, `/api/analytics`, `/sitemap.xml`, `/api/admin/*`, plus dynamic `/work/[slug]` SSR metadata and HTTP 404 handling) are merged into one serverless handler (`api/index.ts`) via `vercel.json` rewrites, keeping the deployment well under Vercel Hobby's 12-function limit. Static files (`robots.txt`, `llms.txt`, `favicon.*`, `images/*`) are served directly without hitting serverless functions.
 - **TypeScript Isolation**: `api/tsconfig.json` uses `"types": ["node"]` with zero Vite references, while `src/tsconfig.json` keeps `"types": ["vite/client"]`.
 
 ### Environment Variables to Set in Vercel
@@ -57,6 +57,8 @@ Go to **Vercel → Project Settings → Environment Variables** and add:
 - `SUPABASE_SERVICE_ROLE_KEY` — Your Supabase `service_role` secret key (never prefix with `VITE_`)
 - `ADMIN_EMAIL` — `ojassawasthi@gmail.com`
 - `RESEND_API_KEY` — *(Optional)* Your Resend API key (`re_...`); leave empty to skip email sending without crashing
+- `GEMINI_API_KEY` — *(Optional)* Google Gemini API key for the "Ask about Ojas" assistant (`POST /api/chat`); if omitted, the UI displays an offline email fallback
+- `GEMINI_MODEL` — *(Optional)* Gemini model name (defaults to `gemini-4-hydrogen`)
 
 ### Deployment Steps
 1. Push the repository (including `package-lock.json`, without `.env` or `bun.lock`) to GitHub, GitLab, or Bitbucket.

@@ -5,6 +5,7 @@
 
 import {AnimatePresence, motion} from 'motion/react';
 import {useCallback, useEffect, useState} from 'react';
+import {ChatLauncher} from './components/ChatLauncher';
 import {CustomCursor} from './components/CustomCursor';
 import {Footer} from './components/Footer';
 import {LoadingCurtain} from './components/LoadingCurtain';
@@ -133,6 +134,7 @@ function AppShell() {
       </main>
 
       <Footer />
+      {pathname !== '/admin' && <ChatLauncher />}
     </div>
   );
 }

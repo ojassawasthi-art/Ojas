@@ -58,6 +58,14 @@ export interface PageView {
   created_at: string;
 }
 
+export interface ChatLog {
+  id: string;
+  question: string;
+  answer: string;
+  ip_hash: string;
+  created_at: string;
+}
+
 export interface AvailabilitySetting {
   enabled: boolean;
   text: string;

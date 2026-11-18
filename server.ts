@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import {createClient, type SupabaseClient} from '@supabase/supabase-js';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
@@ -6,6 +7,7 @@ import express, {type NextFunction, type Request, type Response} from 'express';
 import {Resend} from 'resend';
 import {createServer as createViteServer} from 'vite';
 import {z} from 'zod';
+import {handleChatRequest, type ChatLogRecord} from './api/_lib/chat.js';
 import {siteContent} from './src/content/site';
 import {buildPageSeoData, injectSeoIntoHtml} from './src/lib/routeSeo';
 import type {
@@ -67,6 +69,7 @@ const fallbackStore: {
   testimonials: Testimonial[];
   subscribers: {id: string; email: string; created_at: string}[];
   pageViews: PageView[];
+  chatLogs: ChatLogRecord[];
   settings: SiteSettingsMap;
 } = {
   projects: structuredClone(siteContent.fallbackProjects),
@@ -74,6 +77,7 @@ const fallbackStore: {
   testimonials: [],
   subscribers: [],
   pageViews: [],
+  chatLogs: [],
   settings: structuredClone(siteContent.fallbackSettings),
 };
 
@@ -128,14 +132,23 @@ async function verifyAdmin(req: Request, res: Response, next: NextFunction) {
 
 async function getPublishedProjects(): Promise<Project[]> {
   if (supabaseAdmin) {
-    const {data, error} = await supabaseAdmin
-      .from('projects')
-      .select('*')
-      .eq('published', true)
-      .order('sort_order', {ascending: true})
-      .order('created_at', {ascending: false});
-    if (!error && Array.isArray(data)) {
-      return data as Project[];
+    try {
+      const result = await Promise.race([
+        supabaseAdmin
+          .from('projects')
+          .select('*')
+          .eq('published', true)
+          .order('sort_order', {ascending: true})
+          .order('created_at', {ascending: false}),
+        new Promise<{data: null; error: Error}>((resolve) =>
+          setTimeout(() => resolve({data: null, error: new Error('timeout')}), 3000),
+        ),
+      ]);
+      if (!result.error && Array.isArray(result.data)) {
+        return result.data as Project[];
+      }
+    } catch {
+      // Fall back cleanly to static projects
     }
   }
   return fallbackStore.projects
@@ -453,6 +466,15 @@ async function startServer() {
     res.json({ok: true});
   });
 
+  app.post('/api/chat', async (req, res) => {
+    await handleChatRequest(req, res, supabaseAdmin, (entry) => {
+      fallbackStore.chatLogs.unshift(entry);
+      if (fallbackStore.chatLogs.length > 200) {
+        fallbackStore.chatLogs.length = 200;
+      }
+    });
+  });
+
   // --------------------------------------------------------------------------
   // ADMIN API ROUTES
   // --------------------------------------------------------------------------
@@ -733,6 +755,30 @@ async function startServer() {
       return;
     }
     res.json({views: fallbackStore.pageViews});
+  });
+
+  app.get('/api/admin/chat-logs', verifyAdmin, async (_req, res) => {
+    if (supabaseAdmin) {
+      const {data, error} = await supabaseAdmin
+        .from('chat_logs')
+        .select('id, question, answer, ip_hash, created_at')
+        .order('created_at', {ascending: false})
+        .limit(200);
+      if (error) {
+        if (
+          error.code === '42P01' ||
+          error.message?.toLowerCase().includes('chat_logs')
+        ) {
+          res.json({logs: [], tableMissing: true});
+          return;
+        }
+        res.status(500).json({error: error.message});
+        return;
+      }
+      res.json({logs: data || []});
+      return;
+    }
+    res.json({logs: fallbackStore.chatLogs});
   });
 
   app.put('/api/admin/settings', verifyAdmin, async (req, res) => {
