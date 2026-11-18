@@ -190,12 +190,81 @@ function normalizeHistory(
   return {valid: true, turns};
 }
 
+function sanitizeText(raw: string): string {
+  const secretValues = [
+    process.env.GEMINI_API_KEY,
+    process.env.SUPABASE_SERVICE_ROLE_KEY,
+    process.env.RESEND_API_KEY,
+  ]
+    .map((v) => (v || '').trim())
+    .filter((v) => v.length >= 6);
+
+  let cleaned = raw;
+  for (const secret of secretValues) {
+    cleaned = cleaned.split(secret).join('[REDACTED]');
+  }
+
+  return cleaned
+    .replace(/([?&]key=)[^&\s"']+/gi, '$1[REDACTED]')
+    .replace(/(Bearer\s+)[A-Za-z0-9._\-]+/gi, '$1[REDACTED]')
+    .replace(/AIza[0-9A-Za-z\-_]{16,}/g, '[REDACTED]')
+    .replace(/sb_secret_[0-9A-Za-z\-_]+/g, '[REDACTED]')
+    .slice(0, 600);
+}
+
+function extractGeminiError(err: unknown): {
+  status: number | string;
+  message: string;
+} {
+  let status: number | string = 'unknown';
+  let rawMessage = 'Unknown error';
+
+  if (err && typeof err === 'object') {
+    const record = err as Record<string, unknown>;
+    if (typeof record.status === 'number' || typeof record.status === 'string') {
+      status = record.status;
+    } else if (
+      typeof record.code === 'number' ||
+      typeof record.code === 'string'
+    ) {
+      status = record.code;
+    }
+    if (typeof record.message === 'string' && record.message.trim()) {
+      rawMessage = record.message.trim();
+    }
+  } else if (typeof err === 'string' && err.trim()) {
+    rawMessage = err.trim();
+  }
+
+  return {
+    status,
+    message: sanitizeText(rawMessage),
+  };
+}
+
+function resolveGeminiModel(rawModel: string | undefined): string {
+  const trimmed = (rawModel || '').trim();
+  if (
+    !trimmed ||
+    !trimmed.toLowerCase().startsWith('gemini') ||
+    !/^[a-z0-9._-]+$/i.test(trimmed)
+  ) {
+    return CHAT_CONFIG.DEFAULT_GEMINI_MODEL;
+  }
+  return trimmed;
+}
+
+const VISITOR_UNAVAILABLE_MESSAGE =
+  'Chat is temporarily unavailable, email ojassawasthi@gmail.com';
+
 export async function handleChatRequest(
   req: ApiRequest,
   res: ApiResponse,
   supabase: SupabaseClient | null,
   onFallbackLog?: (entry: ChatLogRecord) => void,
 ): Promise<void> {
+  let geminiModel: string = CHAT_CONFIG.DEFAULT_GEMINI_MODEL;
+
   try {
     res.setHeader('X-Robots-Tag', 'noindex, nofollow');
     res.setHeader('Cache-Control', 'no-store');
@@ -206,8 +275,7 @@ export async function handleChatRequest(
       return;
     }
 
-    const geminiModel =
-      (process.env.GEMINI_MODEL || '').trim() || CHAT_CONFIG.DEFAULT_GEMINI_MODEL;
+    geminiModel = resolveGeminiModel(process.env.GEMINI_MODEL);
 
     const body = await parseJsonBody<ChatRequestBody>(req);
     if (typeof body.message !== 'string') {
@@ -267,7 +335,7 @@ export async function handleChatRequest(
       },
     });
 
-    const isGemini4 = geminiModel.startsWith('gemini-4-');
+    const isGemini4 = geminiModel.toLowerCase().startsWith('gemini-4-');
     const response = await ai.models.generateContent({
       model: geminiModel,
       contents,
@@ -285,10 +353,11 @@ export async function handleChatRequest(
 
     const reply = (response.text || '').trim();
     if (!reply) {
-      sendJson(res, 502, {
-        error:
-          'Unable to generate a response right now. Please try again or email ojassawasthi@gmail.com.',
-      });
+      const finishReason = response.candidates?.[0]?.finishReason || 'unknown';
+      console.error(
+        `[api/chat] Empty response from Gemini (status=200, model=${geminiModel}, finishReason=${String(finishReason)})`,
+      );
+      sendJson(res, 502, {error: VISITOR_UNAVAILABLE_MESSAGE});
       return;
     }
 
@@ -301,10 +370,17 @@ export async function handleChatRequest(
           ip_hash: ipHash,
         });
         if (logError) {
-          console.error('[api/chat] Non-fatal chat_logs insert error:', logError);
+          console.error(
+            '[api/chat] Non-fatal chat_logs insert error:',
+            sanitizeText(logError.message || 'Unknown Supabase error'),
+          );
         }
       } catch (logErr) {
-        console.error('[api/chat] Non-fatal chat_logs exception:', logErr);
+        const logDetail = extractGeminiError(logErr);
+        console.error(
+          '[api/chat] Non-fatal chat_logs exception:',
+          logDetail.message,
+        );
       }
     } else if (onFallbackLog) {
       onFallbackLog({
@@ -318,10 +394,10 @@ export async function handleChatRequest(
 
     sendJson(res, 200, {reply});
   } catch (err) {
-    console.error('[api/chat] Error:', err);
-    sendJson(res, 500, {
-      error:
-        'Something went wrong while answering your question. Please try again or email ojassawasthi@gmail.com.',
-    });
+    const detail = extractGeminiError(err);
+    console.error(
+      `[api/chat] Gemini error (status=${detail.status}, model=${geminiModel}): ${detail.message}`,
+    );
+    sendJson(res, 500, {error: VISITOR_UNAVAILABLE_MESSAGE});
   }
 }

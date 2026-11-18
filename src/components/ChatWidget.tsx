@@ -220,10 +220,16 @@ export default function ChatWidget({
       }
 
       if (!response.ok || !data.reply) {
-        setErrorMessage(
-          data.error ||
-            `Unable to get a response right now. You can email ${ADMIN_EMAIL}.`,
-        );
+        if (response.status === 400 || response.status === 429) {
+          setErrorMessage(
+            data.error ||
+              'Chat is temporarily unavailable, email ojassawasthi@gmail.com',
+          );
+        } else {
+          setErrorMessage(
+            'Chat is temporarily unavailable, email ojassawasthi@gmail.com',
+          );
+        }
         return;
       }
 
@@ -235,7 +241,7 @@ export default function ChatWidget({
       setMessages((prev) => [...prev, assistantMsg]);
     } catch {
       setErrorMessage(
-        `Network error. Please check your connection or email ${ADMIN_EMAIL}.`,
+        'Chat is temporarily unavailable, email ojassawasthi@gmail.com',
       );
     } finally {
       setIsLoading(false);
@@ -409,7 +415,7 @@ export default function ChatWidget({
                 role="alert"
                 className="rounded-xl border border-red-300 bg-red-50 px-3.5 py-2.5 text-xs leading-relaxed text-red-800 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300"
               >
-                {errorMessage}
+                {renderMessageText(errorMessage)}
               </div>
             )}
 
