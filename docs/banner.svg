@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="360" viewBox="0 0 1280 360" role="img" aria-label="Ojas Awasthi, personal brand and developer portfolio">
+  <rect width="1280" height="360" rx="16" fill="#0A0A0A"/>
+  <g stroke="#1B1B19" stroke-width="1">
+    <line x1="0" y1="90" x2="1280" y2="90"/><line x1="0" y1="180" x2="1280" y2="180"/><line x1="0" y1="270" x2="1280" y2="270"/>
+    <line x1="320" y1="0" x2="320" y2="360"/><line x1="640" y1="0" x2="640" y2="360"/><line x1="960" y1="0" x2="960" y2="360"/>
+  </g>
+  <path d="M1010 310 V180 A90 90 0 0 1 1190 180 V310 Z" fill="none" stroke="#C8A97E" stroke-width="2"/>
+  <path d="M1030 310 V182 A70 70 0 0 1 1170 182 V310 Z" fill="none" stroke="#3A3326" stroke-width="1"/>
+  <text x="1100" y="214" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="58" fill="#F5F5F2">OA</text>
+  <text x="80" y="112" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="14" letter-spacing="4" fill="#C8A97E">PERSONAL BRAND &amp; DEVELOPER PORTFOLIO</text>
+  <text x="80" y="204" font-family="Georgia, 'Times New Roman', serif" font-size="88" fill="#F5F5F2">Ojas Awasthi</text>
+  <text x="80" y="254" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="24" fill="#8A8A85">Web developer · Digital strategist · Author</text>
+  <rect x="80" y="282" width="318" height="40" rx="20" fill="none" stroke="#C8A97E" stroke-width="1.5"/>
+  <text x="239" y="308" text-anchor="middle" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="16" fill="#C8A97E">ojasawasthii.vercel.app</text>
+</svg>
