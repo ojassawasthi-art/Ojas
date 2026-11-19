@@ -90,7 +90,7 @@ export function AnimatedArrow({className = 'h-4 w-4'}: {className?: string}) {
   return (
     <ArrowUpRight
       aria-hidden="true"
-      className={`${className} transition-transform duration-200 ease-out group-hover:translate-x-0.5 group-hover:-translate-y-0.5`}
+      className={`${className} motion-safe:transition-transform motion-safe:duration-200 motion-safe:ease-out motion-safe:group-hover:translate-x-0.5 motion-safe:group-hover:-translate-y-0.5`}
     />
   );
 }

@@ -443,6 +443,34 @@ export function buildPageSeoData(
     };
   }
 
+  if (route === '/privacy') {
+    return {
+      statusCode: 200,
+      title: `Privacy Policy | ${siteData.profile.name}`,
+      description:
+        "Privacy policy for Ojas Awasthi's website: newsletter email signups are handled by beehiiv, readers can unsubscribe from any email, and no data is sold.",
+      canonical: `${cleanUrl}/privacy`,
+      ogImage: defaultOgImage,
+      noIndex: false,
+      schemas: [
+        getBreadcrumbSchema(
+          [
+            {name: 'Home', path: '/'},
+            {name: 'Privacy Policy', path: '/privacy'},
+          ],
+          cleanUrl,
+        ),
+      ],
+      bodyHtml: renderShell(`
+        <nav aria-label="Breadcrumb"><a href="/">Home</a> / <span>Privacy Policy</span></nav>
+        <h1>Privacy Policy</h1>
+        <p>Email signups for ${escapeHtml(siteData.profile.name)}&apos;s newsletter are handled directly by beehiiv.</p>
+        <p>Readers can unsubscribe from any email at any time using the unsubscribe link in every issue, or by emailing <a href="mailto:${escapeHtml(siteData.contact.email)}">${escapeHtml(siteData.contact.email)}</a>.</p>
+        <p>No email addresses or personal details are ever sold or shared with third-party marketers.</p>
+      `),
+    };
+  }
+
   return {
     statusCode: 404,
     title: `Page Not Found | ${siteData.profile.name}`,

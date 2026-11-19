@@ -8,6 +8,7 @@ import {Resend} from 'resend';
 import {createServer as createViteServer} from 'vite';
 import {z} from 'zod';
 import {handleChatRequest, type ChatLogRecord} from './api/_lib/chat.js';
+import {handleNewsletterSignup, type NewsletterRecord} from './api/_lib/newsletter.js';
 import {siteContent} from './src/content/site';
 import {buildPageSeoData, injectSeoIntoHtml} from './src/lib/routeSeo';
 import type {
@@ -67,7 +68,7 @@ const fallbackStore: {
   projects: Project[];
   messages: ContactMessage[];
   testimonials: Testimonial[];
-  subscribers: {id: string; email: string; created_at: string}[];
+  subscribers: NewsletterRecord[];
   pageViews: PageView[];
   chatLogs: ChatLogRecord[];
   settings: SiteSettingsMap;
@@ -181,10 +182,6 @@ const contactBodySchema = z.object({
   subject: z.string().trim().min(2).max(200),
   message: z.string().trim().min(10).max(5000),
   website: z.string().optional(),
-});
-
-const newsletterSchema = z.object({
-  email: z.string().trim().email().max(254),
 });
 
 const testimonialSchema = z.object({
@@ -363,38 +360,13 @@ async function startServer() {
   });
 
   app.post('/api/newsletter', async (req, res) => {
-    const parsed = newsletterSchema.safeParse(req.body);
-    if (!parsed.success) {
-      res.status(400).json({error: 'Please enter a valid email address.'});
-      return;
-    }
-
-    if (supabaseAdmin) {
-      const {error} = await supabaseAdmin
-        .from('newsletter_subscribers')
-        .upsert({email: parsed.data.email.toLowerCase()}, {onConflict: 'email'});
-      if (error) {
-        res.status(500).json({error: 'Unable to subscribe right now.'});
-        return;
-      }
-      res.json({ok: true, message: 'Subscribed to updates.'});
-      return;
-    }
-
-    const exists = fallbackStore.subscribers.some(
-      (s) => s.email.toLowerCase() === parsed.data.email.toLowerCase(),
+    await handleNewsletterSignup(
+      req,
+      res,
+      supabaseAdmin,
+      [],
+      fallbackStore.subscribers,
     );
-    if (!exists) {
-      fallbackStore.subscribers.push({
-        id: crypto.randomUUID(),
-        email: parsed.data.email.toLowerCase(),
-        created_at: new Date().toISOString(),
-      });
-    }
-    res.json({
-      ok: true,
-      message: 'Subscribed in preview. Connect Supabase to persist subscribers.',
-    });
   });
 
   app.post('/api/testimonials', async (req, res) => {
@@ -781,6 +753,51 @@ async function startServer() {
     res.json({logs: fallbackStore.chatLogs});
   });
 
+  app.get('/api/admin/newsletter', verifyAdmin, async (_req, res) => {
+    if (supabaseAdmin) {
+      const {data, error} = await supabaseAdmin
+        .from('newsletter_subscribers')
+        .select('*')
+        .order('created_at', {ascending: false});
+      if (error) {
+        res.status(500).json({error: error.message});
+        return;
+      }
+      const subscribers = (data || []).map((row) => ({
+        id: String(row.id),
+        email: String(row.email || ''),
+        name: row.name ? String(row.name) : null,
+        source: row.source ? String(row.source) : 'website',
+        consent: Boolean(row.consent),
+        consent_text: row.consent_text ? String(row.consent_text) : null,
+        created_at: String(row.created_at || ''),
+      }));
+      res.json({subscribers});
+      return;
+    }
+    res.json({subscribers: fallbackStore.subscribers});
+  });
+
+  app.delete('/api/admin/newsletter/:id', verifyAdmin, async (req, res) => {
+    const {id} = req.params;
+    if (supabaseAdmin) {
+      const {error} = await supabaseAdmin
+        .from('newsletter_subscribers')
+        .delete()
+        .eq('id', id);
+      if (error) {
+        res.status(400).json({error: error.message});
+        return;
+      }
+      res.json({ok: true});
+      return;
+    }
+    fallbackStore.subscribers = fallbackStore.subscribers.filter(
+      (s) => s.id !== id,
+    );
+    res.json({ok: true});
+  });
+
   app.put('/api/admin/settings', verifyAdmin, async (req, res) => {
     const nextSettings = req.body?.settings as SiteSettingsMap | undefined;
     if (!nextSettings) {
@@ -844,6 +861,7 @@ async function startServer() {
       {loc: '/press-kit', lastmod: nowIso, changefreq: 'monthly', priority: '0.7'},
       {loc: '/links', lastmod: nowIso, changefreq: 'monthly', priority: '0.7'},
       {loc: '/contact', lastmod: nowIso, changefreq: 'monthly', priority: '0.7'},
+      {loc: '/privacy', lastmod: nowIso, changefreq: 'yearly', priority: '0.4'},
       ...siteContent.blogPosts.map((b) => {
         const parsed = new Date(b.publishedAt);
         return {

@@ -14,6 +14,7 @@ import {SeoHead} from '../components/SeoHead';
 import {TestimonialsSection} from '../components/TestimonialsSection';
 import {siteContent} from '../content/site';
 import {useRouter} from '../context/RouterContext';
+import {getNewsletterUrl} from '../lib/newsletter';
 import {buildPageSeoData} from '../lib/routeSeo';
 import {getCanonicalBaseUrl} from '../lib/seo';
 import type {Project, SiteSettingsMap, Testimonial} from '../types/database';
@@ -118,6 +119,7 @@ export function HomePage({
 
   const heroHeadline =
     settings.hero?.headline || siteContent.profile.siteHeadline;
+  const newsletterUrl = getNewsletterUrl();
 
   return (
     <>
@@ -700,7 +702,48 @@ export function HomePage({
       {/* 9. TESTIMONIALS (automatically hidden when empty) */}
       <TestimonialsSection testimonials={testimonials} />
 
-      {/* 10. CONTACT SECTION */}
+      {/* 10. NEWSLETTER SECTION (hidden when VITE_NEWSLETTER_URL is empty) */}
+      {newsletterUrl && (
+        <section
+          id="newsletter"
+          aria-labelledby="newsletter-heading"
+          className="border-t border-[var(--border)] py-24"
+        >
+          <div className="mx-auto max-w-[1200px] px-6">
+            <div className="flex flex-col justify-between gap-8 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-7 sm:p-10 lg:flex-row lg:items-center">
+              <div className="max-w-xl">
+                <p className="text-xs tracking-widest text-[var(--accent-text)]">
+                  Newsletter
+                </p>
+                <h2
+                  id="newsletter-heading"
+                  className="mt-2 font-serif-display text-3xl leading-[1.08] tracking-tight text-[var(--text)] sm:text-4xl"
+                >
+                  Get new posts by email
+                </h2>
+                <p className="mt-3 text-sm leading-relaxed text-[var(--muted)] sm:text-base">
+                  Occasional emails on web development, digital marketing and
+                  psychology. Unsubscribe anytime.
+                </p>
+              </div>
+
+              <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center lg:shrink-0">
+                <MagneticButton
+                  href={newsletterUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-xl bg-[#0A0A0A] px-6 py-3.5 text-sm font-medium text-[#FAFAF8] transition-opacity hover:opacity-90 dark:bg-[#F5F5F2] dark:text-[#0A0A0A]"
+                >
+                  <span>Subscribe on beehiiv</span>
+                  <AnimatedArrow />
+                </MagneticButton>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* 11. CONTACT SECTION */}
       <section
         id="contact"
         aria-labelledby="contact-heading"

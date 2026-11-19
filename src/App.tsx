@@ -23,6 +23,7 @@ import {HomePage} from './pages/HomePage';
 import {LinksPage} from './pages/LinksPage';
 import {NotFoundPage} from './pages/NotFoundPage';
 import {PressKitPage} from './pages/PressKitPage';
+import {PrivacyPage} from './pages/PrivacyPage';
 import {ProjectDetailPage} from './pages/ProjectDetailPage';
 import {ServicesPage} from './pages/ServicesPage';
 import {WorkPage} from './pages/WorkPage';
@@ -98,6 +99,9 @@ function AppShell() {
     }
     if (pathname === '/contact') {
       return <ContactPage />;
+    }
+    if (pathname === '/privacy') {
+      return <PrivacyPage />;
     }
     if (pathname === '/blog') {
       return <BlogPage />;

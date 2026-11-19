@@ -1,9 +1,11 @@
 import {
   Check,
+  Download,
   GripVertical,
   Loader2,
   LogOut,
   Plus,
+  Search,
   Trash2,
   Upload,
 } from 'lucide-react';
@@ -15,6 +17,7 @@ import type {
   ChatLog,
   ContactMessage,
   ContactMessageStatus,
+  NewsletterSubscriber,
   PageView,
   Project,
   SiteSettingsMap,
@@ -29,6 +32,7 @@ type AdminTab =
   | 'projects'
   | 'messages'
   | 'testimonials'
+  | 'newsletter'
   | 'analytics'
   | 'chat'
   | 'settings';
@@ -45,6 +49,8 @@ export function AdminPage({onDataChanged}: AdminPageProps) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [subscribers, setSubscribers] = useState<NewsletterSubscriber[]>([]);
+  const [subscriberSearch, setSubscriberSearch] = useState('');
   const [pageViews, setPageViews] = useState<PageView[]>([]);
   const [chatLogs, setChatLogs] = useState<ChatLog[]>([]);
   const [chatTableMissing, setChatTableMissing] = useState(false);
@@ -145,10 +151,11 @@ export function AdminPage({onDataChanged}: AdminPageProps) {
     setLoadingData(true);
     try {
       const headers = authHeaders();
-      const [pRes, mRes, tRes, aRes, cRes, sRes] = await Promise.all([
+      const [pRes, mRes, tRes, nRes, aRes, cRes, sRes] = await Promise.all([
         fetch('/api/admin/projects', {headers}),
         fetch('/api/admin/messages', {headers}),
         fetch('/api/admin/testimonials', {headers}),
+        fetch('/api/admin/newsletter', {headers}),
         fetch('/api/admin/analytics', {headers}),
         fetch('/api/admin/chat-logs', {headers}),
         fetch('/api/settings'),
@@ -165,6 +172,10 @@ export function AdminPage({onDataChanged}: AdminPageProps) {
       if (tRes.ok) {
         const d = await tRes.json();
         setTestimonials(d.testimonials || []);
+      }
+      if (nRes.ok) {
+        const d = await nRes.json();
+        setSubscribers(d.subscribers || []);
       }
       if (aRes.ok) {
         const d = await aRes.json();
@@ -440,6 +451,58 @@ export function AdminPage({onDataChanged}: AdminPageProps) {
     }
   };
 
+  const handleDeleteSubscriber = async (id: string) => {
+    const res = await fetch(`/api/admin/newsletter/${id}`, {
+      method: 'DELETE',
+      headers: authHeaders(),
+    });
+    if (res.ok) {
+      setSubscribers((prev) => prev.filter((s) => s.id !== id));
+      setNotice('Subscriber removed.');
+    }
+  };
+
+  const handleExportSubscribersCsv = () => {
+    const escapeCsv = (val: string | boolean | null | undefined) => {
+      const str = val === null || val === undefined ? '' : String(val);
+      if (/[",\r\n]/.test(str)) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    };
+
+    const header = 'email,name,created_at,consent';
+    const rows = subscribers.map((sub) =>
+      [
+        escapeCsv(sub.email),
+        escapeCsv(sub.name || ''),
+        escapeCsv(sub.created_at),
+        escapeCsv(Boolean(sub.consent)),
+      ].join(','),
+    );
+    const csv = [header, ...rows].join('\n');
+    const blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `newsletter-subscribers-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const filteredSubscribers = (() => {
+    const q = subscriberSearch.trim().toLowerCase();
+    if (!q) return subscribers;
+    return subscribers.filter(
+      (s) =>
+        s.email.toLowerCase().includes(q) ||
+        (s.name || '').toLowerCase().includes(q) ||
+        (s.source || '').toLowerCase().includes(q),
+    );
+  })();
+
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
     const res = await fetch('/api/admin/settings', {
@@ -579,6 +642,10 @@ export function AdminPage({onDataChanged}: AdminPageProps) {
                 {
                   id: 'testimonials',
                   label: `Testimonials (${testimonials.length})`,
+                },
+                {
+                  id: 'newsletter',
+                  label: `Newsletter (${subscribers.length})`,
                 },
                 {id: 'analytics', label: `Analytics (${pageViews.length})`},
                 {id: 'chat', label: `Chat questions (${chatLogs.length})`},
@@ -994,7 +1061,112 @@ export function AdminPage({onDataChanged}: AdminPageProps) {
             </div>
           )}
 
-          {/* TAB 4: ANALYTICS */}
+          {/* TAB 4: NEWSLETTER */}
+          {tab === 'newsletter' && (
+            <div className="mt-8 space-y-5">
+              <div className="flex flex-col justify-between gap-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 sm:flex-row sm:items-center">
+                <div>
+                  <p className="text-xs text-[var(--muted)]">Total subscribers</p>
+                  <p className="font-mono-tabular mt-0.5 text-2xl font-medium text-[var(--text)]">
+                    {subscribers.length}
+                  </p>
+                </div>
+
+                <div className="flex flex-1 flex-wrap items-center justify-end gap-3">
+                  <div className="relative min-w-[200px] flex-1 sm:max-w-xs">
+                    <Search
+                      className="pointer-events-none absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-[var(--muted)]"
+                      aria-hidden="true"
+                    />
+                    <label htmlFor="admin-newsletter-search" className="sr-only">
+                      Search newsletter subscribers
+                    </label>
+                    <input
+                      id="admin-newsletter-search"
+                      type="search"
+                      value={subscriberSearch}
+                      onChange={(e) => setSubscriberSearch(e.target.value)}
+                      placeholder="Search email, name, or source"
+                      className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] py-2 pr-3 pl-9 text-xs text-[var(--text)] placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:outline-none"
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleExportSubscribersCsv}
+                    disabled={subscribers.length === 0}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3.5 py-2 text-xs font-medium text-[var(--text)] transition-colors hover:border-[var(--accent)] disabled:opacity-50"
+                  >
+                    <Download className="h-3.5 w-3.5" aria-hidden="true" />
+                    <span>Export CSV</span>
+                  </button>
+                </div>
+              </div>
+
+              {filteredSubscribers.length === 0 ? (
+                <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-10 text-center text-sm text-[var(--muted)]">
+                  {subscribers.length === 0
+                    ? 'No newsletter subscribers yet.'
+                    : 'No subscribers match your search.'}
+                </div>
+              ) : (
+                <div className="overflow-x-auto rounded-2xl border border-[var(--border)] bg-[var(--bg)]">
+                  <table className="w-full text-left text-xs">
+                    <thead className="border-b border-[var(--border)] bg-[var(--surface)] text-[var(--muted)]">
+                      <tr>
+                        <th className="px-5 py-3 font-medium">Email</th>
+                        <th className="px-5 py-3 font-medium">Name</th>
+                        <th className="px-5 py-3 font-medium">Source</th>
+                        <th className="px-5 py-3 font-medium">Date</th>
+                        <th className="px-5 py-3 text-right font-medium">
+                          Action
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[var(--border)]">
+                      {filteredSubscribers.map((sub) => (
+                        <tr key={sub.id} className="hover:bg-[var(--surface)]/50">
+                          <td className="px-5 py-3.5 font-medium text-[var(--text)]">
+                            {sub.email}
+                          </td>
+                          <td className="px-5 py-3.5 text-[var(--muted)]">
+                            {sub.name || '—'}
+                          </td>
+                          <td className="px-5 py-3.5 text-[var(--muted)]">
+                            {sub.source || 'website'}
+                          </td>
+                          <td className="font-mono-tabular px-5 py-3.5 text-[var(--muted)]">
+                            {sub.created_at
+                              ? new Date(sub.created_at).toLocaleDateString(
+                                  'en-IN',
+                                  {
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric',
+                                  },
+                                )
+                              : '—'}
+                          </td>
+                          <td className="px-5 py-3.5 text-right">
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteSubscriber(sub.id)}
+                              aria-label={`Delete subscriber ${sub.email}`}
+                              className="inline-flex rounded-xl border border-[var(--border)] p-2 text-[var(--muted)] transition-colors hover:text-red-500"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 5: ANALYTICS */}
           {tab === 'analytics' && (
             <div className="mt-8 space-y-8">
               <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-7">

@@ -90,6 +90,7 @@ async function run() {
     {route: '/press-kit', outFile: path.join(distDir, 'press-kit', 'index.html')},
     {route: '/links', outFile: path.join(distDir, 'links', 'index.html')},
     {route: '/contact', outFile: path.join(distDir, 'contact', 'index.html')},
+    {route: '/privacy', outFile: path.join(distDir, 'privacy', 'index.html')},
     {route: '/admin', outFile: path.join(distDir, 'admin', 'index.html')},
     {route: '/404', outFile: path.join(distDir, '404.html')},
   ];

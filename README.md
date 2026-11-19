@@ -13,7 +13,7 @@ Personal portfolio website for **Ojas Awasthi** (Web Developer, Digital Marketer
 
 2. **Create a Supabase project**
    - Go to [supabase.com](https://supabase.com) and create a new project.
-   - Open **SQL Editor** and run `supabase/migrations/001_initial_schema.sql` and `supabase/migrations/002_chat_tables.sql`. This creates:
+   - Open **SQL Editor** and run `supabase/migrations/001_initial_schema.sql`, `supabase/migrations/002_chat_tables.sql`, and `supabase/migrations/003_newsletter_upgrade.sql`. This creates:
      - Tables: `projects`, `contact_messages`, `testimonials`, `newsletter_subscribers`, `page_views`, `site_settings`, `chat_logs`, `chat_rate_limits`
      - Strict Row Level Security (RLS) policies on every table
      - Public `project-images` storage bucket (5 MB limit, image MIME types only, admin upload)
@@ -38,7 +38,7 @@ Personal portfolio website for **Ojas Awasthi** (Web Developer, Digital Marketer
 ## Deploy on Vercel
 
 This project is built for Vercel's **Hobby (free)** plan:
-- **Build & Output**: Uses `vercel.json` (`framework: "vite"`, `buildCommand: "npm run build"`, `outputDirectory: "dist"`). Running `npm run build` compiles Vite and pre-renders static routes (`/`, `/about`, `/education`, `/books`, `/services`, `/work`, `/blog`, all `/blog/<slug>` articles, `/press-kit`, `/links`, `/contact`, `/admin`, `/404`) into HTML with full `<head>` metadata and crawler-visible content.
+- **Build & Output**: Uses `vercel.json` (`framework: "vite"`, `buildCommand: "npm run build"`, `outputDirectory: "dist"`). Running `npm run build` compiles Vite and pre-renders static routes (`/`, `/about`, `/education`, `/books`, `/services`, `/work`, `/blog`, all `/blog/<slug>` articles, `/press-kit`, `/links`, `/contact`, `/privacy`, `/admin`, `/404`) into HTML with full `<head>` metadata and crawler-visible content.
 - **Single Serverless Function**: All routes (`/api/projects`, `/api/chat`, `/api/contact`, `/api/newsletter`, `/api/testimonials`, `/api/settings`, `/api/analytics`, `/sitemap.xml`, `/api/admin/*`, plus dynamic `/work/[slug]` SSR metadata and HTTP 404 handling) are merged into one serverless handler (`api/index.ts`) via `vercel.json` rewrites, keeping the deployment well under Vercel Hobby's 12-function limit. Static files (`robots.txt`, `llms.txt`, `favicon.*`, `images/*`) are served directly without hitting serverless functions.
 - **TypeScript Isolation**: `api/tsconfig.json` uses `"types": ["node"]` with zero Vite references, while `src/tsconfig.json` keeps `"types": ["vite/client"]`.
 
@@ -52,6 +52,7 @@ Go to **Vercel → Project Settings → Environment Variables** and add:
 - `VITE_SITE_URL` — `https://ojasawasthii.vercel.app` (or your custom domain)
 - `VITE_GOOGLE_SITE_VERIFICATION` — *(Optional)* Google Search Console HTML meta verification token; leave empty to omit
 - `VITE_GA_MEASUREMENT_ID` — *(Optional)* Google Analytics 4 ID (`G-...`); leave empty to skip GA4
+- `VITE_NEWSLETTER_URL` — *(Optional)* Hosted newsletter signup page URL (e.g. Substack or Buttondown); leave empty to hide the secondary link
 
 **Server-only variables (`/api` serverless functions only):**
 - `SUPABASE_SERVICE_ROLE_KEY` — Your Supabase `service_role` secret key (never prefix with `VITE_`)

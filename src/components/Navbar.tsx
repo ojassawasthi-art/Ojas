@@ -4,8 +4,9 @@ import {useEffect, useRef, useState} from 'react';
 import {siteContent} from '../content/site';
 import {useRouter} from '../context/RouterContext';
 import {useTheme} from '../context/ThemeContext';
+import {getNewsletterUrl} from '../lib/newsletter';
 
-const NAV_ITEMS = [
+const BASE_NAV_ITEMS = [
   {label: 'Work', href: '/#work', route: '/work'},
   {label: 'About', href: '/#about', route: '/about'},
   {label: 'Journey', href: '/#journey', route: '/about'},
@@ -21,6 +22,14 @@ export function Navbar() {
   const [hidden, setHidden] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const lastScrollY = useRef(0);
+  const newsletterUrl = getNewsletterUrl();
+  const navItems = newsletterUrl
+    ? [
+        ...BASE_NAV_ITEMS.slice(0, 5),
+        {label: 'Newsletter', href: '/#newsletter', route: '/#newsletter'},
+        BASE_NAV_ITEMS[5],
+      ]
+    : BASE_NAV_ITEMS;
 
   useEffect(() => {
     const onScroll = () => {
@@ -44,13 +53,17 @@ export function Navbar() {
 
   const handleNavClick = (
     e: React.MouseEvent<HTMLAnchorElement>,
-    item: (typeof NAV_ITEMS)[number],
+    item: (typeof BASE_NAV_ITEMS)[number],
   ) => {
     e.preventDefault();
     setMobileOpen(false);
     if (pathname === '/') {
       navigate(item.href);
-    } else if (item.href === '/#journey' || item.href === '/#credentials') {
+    } else if (
+      item.href === '/#journey' ||
+      item.href === '/#credentials' ||
+      item.href === '/#newsletter'
+    ) {
       navigate(item.href);
     } else {
       navigate(item.route);
@@ -87,9 +100,12 @@ export function Navbar() {
             aria-label="Primary"
             className="hidden md:flex items-center gap-7 text-sm text-[var(--muted)]"
           >
-            {NAV_ITEMS.map((item) => {
+            {navItems.map((item) => {
               const isActive =
-                pathname !== '/' && pathname.startsWith(item.route) && item.route !== '/about';
+                pathname !== '/' &&
+                !item.route.startsWith('/#') &&
+                pathname.startsWith(item.route) &&
+                item.route !== '/about';
               return (
                 <a
                   key={item.label}
@@ -151,7 +167,7 @@ export function Navbar() {
             className="fixed inset-0 z-20 flex flex-col justify-between bg-[#FAFAF8] px-6 pt-24 pb-10 dark:bg-[#0A0A0A] md:hidden"
           >
             <nav aria-label="Mobile navigation" className="flex flex-col gap-5">
-              {NAV_ITEMS.map((item, idx) => (
+              {navItems.map((item, idx) => (
                 <motion.a
                   key={item.label}
                   href={item.href}

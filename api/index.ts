@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {z} from 'zod';
 import {handleChatRequest} from './_lib/chat.js';
+import {handleNewsletterSignup} from './_lib/newsletter.js';
 import {buildPageSeoData, injectSeoIntoHtml} from './_lib/route-seo.js';
 import {siteData, type SiteSettingsMap} from './_lib/site-data.js';
 import {
@@ -28,10 +29,6 @@ const contactBodySchema = z.object({
   subject: z.string().trim().min(2).max(200),
   message: z.string().trim().min(10).max(5000),
   website: z.string().optional(),
-});
-
-const newsletterSchema = z.object({
-  email: z.string().trim().email().max(254),
 });
 
 const testimonialSchema = z.object({
@@ -162,6 +159,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
           },
           {loc: '/links', lastmod: nowIso, changefreq: 'monthly', priority: '0.7'},
           {loc: '/contact', lastmod: nowIso, changefreq: 'monthly', priority: '0.7'},
+          {loc: '/privacy', lastmod: nowIso, changefreq: 'yearly', priority: '0.4'},
           ...siteData.blogPosts.map((b) => {
             const parsed = new Date(b.publishedAt);
             return {
@@ -416,38 +414,11 @@ ${urlEntries
     }
 
     // --------------------------------------------------------------------------
-    // 7. NEWSLETTER SUBSCRIPTION
+    // 7. NEWSLETTER SUBSCRIPTION (No emails sent; stores to Supabase only)
     // --------------------------------------------------------------------------
     if (route === '/api/newsletter' && method === 'POST') {
-      try {
-        if (!supabase) {
-          missingEnvResponse(res, missingVars);
-          return;
-        }
-
-        const body = await parseJsonBody(req);
-        const parsed = newsletterSchema.safeParse(body);
-        if (!parsed.success) {
-          sendJson(res, 400, {error: 'Please enter a valid email address.'});
-          return;
-        }
-
-        const {error} = await supabase
-          .from('newsletter_subscribers')
-          .upsert({email: parsed.data.email.toLowerCase()}, {onConflict: 'email'});
-        if (error) {
-          console.error('[api/newsletter] Supabase error:', error);
-          sendJson(res, 500, {error: 'Unable to subscribe right now.'});
-          return;
-        }
-
-        sendJson(res, 200, {ok: true, message: 'Subscribed to updates.'});
-        return;
-      } catch (err) {
-        console.error('[api/newsletter] Error:', err);
-        sendJson(res, 500, {error: 'Newsletter subscription failed.'});
-        return;
-      }
+      await handleNewsletterSignup(req, res, supabase, missingVars);
+      return;
     }
 
     // --------------------------------------------------------------------------
@@ -811,6 +782,50 @@ ${urlEntries
             return;
           }
           sendJson(res, 200, {logs: data || []});
+          return;
+        }
+
+        // /api/admin/newsletter
+        if (route === '/api/admin/newsletter' && method === 'GET') {
+          const {data, error} = await supabase
+            .from('newsletter_subscribers')
+            .select('*')
+            .order('created_at', {ascending: false});
+          if (error) {
+            console.error('[api/admin/newsletter GET] Error:', error);
+            sendJson(res, 500, {error: error.message});
+            return;
+          }
+          const subscribers = (data || []).map((row) => ({
+            id: String(row.id),
+            email: String(row.email || ''),
+            name: row.name ? String(row.name) : null,
+            source: row.source ? String(row.source) : 'website',
+            consent: Boolean(row.consent),
+            consent_text: row.consent_text ? String(row.consent_text) : null,
+            created_at: String(row.created_at || ''),
+          }));
+          sendJson(res, 200, {subscribers});
+          return;
+        }
+
+        // /api/admin/newsletter/:id
+        if (route.startsWith('/api/admin/newsletter/') && method === 'DELETE') {
+          const id = route.slice('/api/admin/newsletter/'.length);
+          if (!id) {
+            sendJson(res, 400, {error: 'Subscriber ID is required.'});
+            return;
+          }
+          const {error} = await supabase
+            .from('newsletter_subscribers')
+            .delete()
+            .eq('id', id);
+          if (error) {
+            console.error('[api/admin/newsletter DELETE] Error:', error);
+            sendJson(res, 400, {error: error.message});
+            return;
+          }
+          sendJson(res, 200, {ok: true});
           return;
         }
 

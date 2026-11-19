@@ -46,6 +46,10 @@ export interface Testimonial {
 export interface NewsletterSubscriber {
   id: string;
   email: string;
+  name?: string | null;
+  source?: string | null;
+  consent?: boolean;
+  consent_text?: string | null;
   created_at: string;
 }
 

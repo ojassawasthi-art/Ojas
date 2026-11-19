@@ -90,12 +90,18 @@ export function RouterProvider({children}: {children: ReactNode}) {
 
   const scrollToSection = useCallback((sectionId: string) => {
     const target = document.getElementById(sectionId);
-    if (!target) return;
-    if (lenisRef.current) {
+    if (!target) return false;
+    const prefersReducedMotion = window.matchMedia(
+      '(prefers-reduced-motion: reduce)',
+    ).matches;
+    if (lenisRef.current && !prefersReducedMotion) {
       lenisRef.current.scrollTo(target, {offset: -72});
     } else {
-      target.scrollIntoView({behavior: 'smooth'});
+      target.scrollIntoView({
+        behavior: prefersReducedMotion ? 'auto' : 'smooth',
+      });
     }
+    return true;
   }, []);
 
   const navigate = useCallback(
@@ -107,7 +113,11 @@ export function RouterProvider({children}: {children: ReactNode}) {
         window.history.pushState({}, '', to);
         setPathname(targetPath);
         if (hash) {
-          setTimeout(() => scrollToSection(hash), 80);
+          setTimeout(() => {
+            if (!scrollToSection(hash)) {
+              setTimeout(() => scrollToSection(hash), 300);
+            }
+          }, 80);
         } else {
           scrollToTop();
         }

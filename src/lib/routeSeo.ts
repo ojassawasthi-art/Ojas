@@ -331,6 +331,15 @@ export function buildPageSeoData(
               .join('')}
           </ul>
         </section>
+        ${
+          (
+            globalThis as {
+              process?: {env?: Record<string, string | undefined>};
+            }
+          ).process?.env?.VITE_NEWSLETTER_URL?.trim()
+            ? '<section><h2>Get new posts by email</h2><p>Occasional emails on web development, digital marketing and psychology. Unsubscribe anytime.</p></section>'
+            : ''
+        }
       `),
     };
   }
@@ -767,7 +776,36 @@ export function buildPageSeoData(
     };
   }
 
-  // 13. ADMIN (/admin) — noindex, nofollow
+  // 13. PRIVACY (/privacy)
+  if (route === '/privacy') {
+    return {
+      statusCode: 200,
+      title: `Privacy Policy | ${siteContent.profile.name}`,
+      description:
+        "Privacy policy for Ojas Awasthi's website: newsletter email signups are handled by beehiiv, readers can unsubscribe from any email, and no data is sold.",
+      canonical: `${cleanUrl}/privacy`,
+      ogImage: defaultOgImage,
+      noIndex: false,
+      schemas: [
+        getBreadcrumbSchema(
+          [
+            {name: 'Home', path: '/'},
+            {name: 'Privacy Policy', path: '/privacy'},
+          ],
+          cleanUrl,
+        ),
+      ],
+      bodyHtml: renderShell(`
+        <nav aria-label="Breadcrumb"><a href="/">Home</a> / <span>Privacy Policy</span></nav>
+        <h1>Privacy Policy</h1>
+        <p>Email signups for ${escapeHtml(siteContent.profile.name)}&apos;s newsletter are handled directly by beehiiv.</p>
+        <p>Readers can unsubscribe from any email at any time using the unsubscribe link in every issue, or by emailing <a href="mailto:${escapeHtml(siteContent.contact.email)}">${escapeHtml(siteContent.contact.email)}</a>.</p>
+        <p>No email addresses or personal details are ever sold or shared with third-party marketers.</p>
+      `),
+    };
+  }
+
+  // 14. ADMIN (/admin) — noindex, nofollow
   if (route === '/admin') {
     return {
       statusCode: 200,
