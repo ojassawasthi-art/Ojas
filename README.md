@@ -1,3 +1,152 @@
+
+<div align="center">
+
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:0A0A0A,100:C8A97E&height=200&section=header&text=Ojas%20Awasthi&fontSize=48&fontColor=F5F5F2&animation=fadeIn&fontAlignY=38&desc=Personal%20brand%20%26%20developer%20portfolio&descSize=18&descAlignY=60" alt="Ojas Awasthi portfolio" width="100%" />
+
+<br/>
+
+<a href="https://ojasawasthii.vercel.app"><img src="https://img.shields.io/badge/Live%20site-ojasawasthii.vercel.app-0A0A0A?style=for-the-badge&logo=vercel&logoColor=C8A97E" alt="Live site" /></a>
+<a href="https://www.linkedin.com/in/ojassawasthi"><img src="https://img.shields.io/badge/LinkedIn-Connect-0A0A0A?style=for-the-badge&logo=linkedin&logoColor=C8A97E" alt="LinkedIn" /></a>
+<a href="mailto:ojassawasthi@gmail.com"><img src="https://img.shields.io/badge/Email-Say%20hello-0A0A0A?style=for-the-badge&logo=gmail&logoColor=C8A97E" alt="Email" /></a>
+
+<br/><br/>
+
+![React](https://img.shields.io/badge/React-0A0A0A?style=flat-square&logo=react&logoColor=C8A97E)
+![Vite](https://img.shields.io/badge/Vite-0A0A0A?style=flat-square&logo=vite&logoColor=C8A97E)
+![TypeScript](https://img.shields.io/badge/TypeScript-0A0A0A?style=flat-square&logo=typescript&logoColor=C8A97E)
+![Tailwind](https://img.shields.io/badge/Tailwind_CSS-0A0A0A?style=flat-square&logo=tailwindcss&logoColor=C8A97E)
+![Supabase](https://img.shields.io/badge/Supabase-0A0A0A?style=flat-square&logo=supabase&logoColor=C8A97E)
+![Vercel](https://img.shields.io/badge/Vercel-0A0A0A?style=flat-square&logo=vercel&logoColor=C8A97E)
+
+</div>
+
+---
+
+## ✦ Overview
+
+The source code of **[ojasawasthii.vercel.app](https://ojasawasthii.vercel.app)**, the personal website of **Ojas Awasthi**, a web developer, digital marketer and author from Lucknow, India.
+
+It's a fast, minimal portfolio with a private admin panel, a Supabase backend and a search-engine-friendly build.
+
+<!-- Add a screenshot later: save it as docs/preview.png, then replace this line with:
+<p align="center"><img src="docs/preview.png" alt="Website preview" width="80%" /></p>
+-->
+
+## ✦ Features
+
+- **Premium, minimal design** with light and dark mode and smooth motion
+- **Animated loading screen** shown once per session
+- **Project showcase** with case-study pages, loaded from Supabase
+- **Private admin panel** (magic-link login) to add and edit projects, read messages and manage content
+- **Contact form** saved to Supabase with spam protection and rate limiting
+- **SEO-ready:** pre-rendered pages, dynamic `sitemap.xml`, `robots.txt`, `llms.txt`, structured data (JSON-LD) and Open Graph tags
+- **Optional AI assistant** ("Ask about Ojas") powered by the Gemini API, answering only from a fixed knowledge file
+- **Optional newsletter link** that opens the beehiiv signup page
+
+## ✦ Architecture
+
+```mermaid
+flowchart LR
+  V[Visitor] --> F[React + Vite frontend]
+  F -->|/api/*| A[Vercel serverless handler]
+  A --> S[(Supabase Postgres)]
+  A -.optional.-> G[Gemini API]
+  O[Owner] --> AD[Admin panel] --> S
+```
+
+## ✦ Tech stack
+
+| Layer | Tools |
+|---|---|
+| Frontend | React, Vite, TypeScript, Tailwind CSS |
+| Backend | One merged Vercel serverless handler (`/api/index`) |
+| Database and auth | Supabase (Postgres, Row Level Security, magic-link auth, storage) |
+| Hosting | Vercel |
+| AI (optional) | Google Gemini API |
+
+> Edit this table to match `package.json` if your stack differs.
+
+## ✦ Project structure (simplified)
+
+```
+.
+├── api/                # serverless handler and server-only helpers
+├── public/             # static files (robots.txt, favicon, images)
+├── scripts/            # build scripts (pre-rendering)
+├── src/
+│   ├── components/     # UI components
+│   └── content/        # site content (site.ts)
+├── vercel.json         # rewrites and headers
+└── package.json
+```
+
+## ✦ Getting started
+
+```bash
+git clone <this-repo-url>
+cd <repo-folder>
+npm install
+cp .env.example .env.local   # then fill in your own values
+npm run dev
+```
+
+| Command | What it does |
+|---|---|
+| `npm run dev` | Start the local dev server |
+| `npm run build` | Production build and pre-render |
+| `npm run lint` | Type-check the frontend and the API |
+
+## ✦ Environment variables
+
+Set these in your hosting provider's settings. **Never commit real values.**
+
+| Name | Required | Where it's used |
+|---|---|---|
+| `VITE_SUPABASE_URL` | Yes | Frontend and build |
+| `VITE_SUPABASE_ANON_KEY` | Yes | Frontend (public key) |
+| `NEXT_PUBLIC_SUPABASE_URL` | Yes | Same Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Yes | Same public key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Yes | **Server only** (serverless handler) |
+| `ADMIN_EMAIL`, `VITE_ADMIN_EMAIL` | Yes | Who can open the admin panel |
+| `VITE_SITE_URL`, `NEXT_PUBLIC_SITE_URL` | Yes | Canonical URL for SEO |
+| `VITE_GOOGLE_SITE_VERIFICATION` | No | Search Console verification tag |
+| `VITE_GA_MEASUREMENT_ID` | No | Analytics |
+| `GEMINI_API_KEY`, `GEMINI_MODEL` | No | AI assistant (hidden when unset) |
+| `VITE_NEWSLETTER_URL` | No | beehiiv signup link |
+| `RESEND_API_KEY` | No | Email alerts (not required) |
+
+## ✦ Deployment
+
+1. Import the repo into [Vercel](https://vercel.com).
+2. Framework preset: **Vite**. Build command: `npm run build`. Output directory: `dist`.
+3. Add the environment variables above.
+4. In Supabase, run the SQL scripts that create the tables and security policies.
+5. Deploy.
+
+## ✦ Security notes
+
+- The Supabase **service role key** is read only inside the serverless handler and is never sent to the browser.
+- Database access is protected by Row Level Security. Only the admin email can write content.
+- `.env` files are ignored by Git.
+
+## ✦ License
+
+All rights reserved. © 2026 Ojas Awasthi. The code is published for viewing. Please don't copy the site's design, text, images or books without written permission. Contact: [ojassawasthi@gmail.com](mailto:ojassawasthi@gmail.com).
+
+---
+
+<div align="center">
+
+*"This isn't the end of me building things. Just the end of this one."*
+
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:C8A97E,100:0A0A0A&height=100&section=footer" width="100%" alt="" />
+
+</div>
+
+
+
+
+
 # Ojas Awasthi — Personal Brand & Developer Portfolio
 
 Personal portfolio website for **Ojas Awasthi** (Web Developer, Digital Marketer, Published Author & Commerce Student in Lucknow, India), backed by Supabase PostgreSQL, Supabase Auth, Supabase Storage, Resend email notifications, and technical SEO.
