@@ -54,15 +54,15 @@ export function JourneyTimeline() {
             {/* Timeline node */}
             <span
               aria-hidden="true"
-              className={`absolute top-2 -left-[29px] h-2.5 w-2.5 rounded-full border sm:-left-[41px] ${
+              className={`absolute top-2 -left-[29px] h-2.5 w-2.5 rounded-full sm:-left-[41px] ${
                 entry.highlight
-                  ? 'border-[var(--accent)] bg-[var(--accent)]'
-                  : 'border-[var(--border)] bg-[var(--bg)]'
+                  ? 'bg-[var(--accent)] ring-4 ring-[var(--accent-soft)]'
+                  : 'border-2 border-[var(--accent)] bg-[var(--surface)]'
               }`}
             />
 
             {entry.highlight ? (
-              <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-7 sm:p-10">
+              <div className="card-elevated bg-[var(--surface)] p-7 sm:p-10">
                 <p className="font-mono-tabular text-xs text-[var(--accent-text)]">
                   {entry.period} · {entry.organization}
                 </p>
@@ -80,14 +80,19 @@ export function JourneyTimeline() {
                   </blockquote>
                 )}
                 {entry.skills && entry.skills.length > 0 && (
-                  <p className="mt-5 text-xs text-[var(--muted)]">
-                    Skills: {entry.skills.join(' · ')}
-                  </p>
+                  <div className="mt-5 flex flex-wrap items-center gap-2">
+                    <span className="text-xs text-[var(--muted)]">Skills:</span>
+                    {entry.skills.map((skill) => (
+                      <span key={skill} className="tag-pill">
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
                 )}
               </div>
             ) : (
-              <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-6 sm:p-8">
-                <p className="font-mono-tabular text-xs text-[var(--muted)]">
+              <div className="card-elevated bg-[var(--surface)] p-6 sm:p-8">
+                <p className="font-mono-tabular text-xs text-[var(--accent-text)]">
                   {entry.period} · {entry.organization}
                 </p>
                 <h3 className="mt-1.5 font-serif-display text-2xl tracking-tight text-[var(--text)] sm:text-3xl">

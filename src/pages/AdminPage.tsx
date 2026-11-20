@@ -550,7 +550,7 @@ export function AdminPage({onDataChanged}: AdminPageProps) {
         <SeoHead title="Admin | Ojas Awasthi" path="/admin" noIndex />
         <section className="flex min-h-[75vh] items-center pt-24 pb-20">
           <div className="mx-auto w-full max-w-md px-6">
-            <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-8">
+            <div className="card-elevated bg-[var(--surface)] p-8">
               <p className="text-xs tracking-widest text-[var(--accent-text)]">
                 Private Workspace
               </p>
@@ -590,7 +590,7 @@ export function AdminPage({onDataChanged}: AdminPageProps) {
                 <button
                   type="submit"
                   disabled={sendingLink}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#0A0A0A] px-5 py-3 text-sm font-medium text-[#FAFAF8] dark:bg-[#F5F5F2] dark:text-[#0A0A0A]"
+                  className="btn-primary inline-flex w-full items-center justify-center gap-2 px-5 py-3 text-sm font-medium"
                 >
                   {sendingLink && <Loader2 className="h-4 w-4 animate-spin" />}
                   <span>
@@ -626,7 +626,7 @@ export function AdminPage({onDataChanged}: AdminPageProps) {
             <button
               type="button"
               onClick={handleSignOut}
-              className="inline-flex items-center gap-2 rounded-xl border border-[var(--border)] px-4 py-2 text-xs font-medium text-[var(--text)] hover:border-[var(--accent)]"
+              className="btn-secondary inline-flex items-center gap-2 px-4 py-2 text-xs font-medium"
             >
               <LogOut className="h-3.5 w-3.5" />
               <span>Sign out</span>
@@ -656,10 +656,10 @@ export function AdminPage({onDataChanged}: AdminPageProps) {
                 key={item.id}
                 type="button"
                 onClick={() => setTab(item.id)}
-                className={`rounded-xl px-4 py-2 text-xs font-medium whitespace-nowrap transition-colors ${
+                className={`rounded-full px-4 py-2 text-xs font-medium whitespace-nowrap transition-colors ${
                   tab === item.id
-                    ? 'bg-[#0A0A0A] text-[#FAFAF8] dark:bg-[#F5F5F2] dark:text-[#0A0A0A]'
-                    : 'border border-[var(--border)] text-[var(--muted)] hover:text-[var(--text)]'
+                    ? 'bg-[var(--accent-button)] text-[var(--accent-contrast)] shadow-xs'
+                    : 'border border-[var(--border)] bg-[var(--surface)] text-[var(--muted)] hover:border-[var(--accent)] hover:text-[var(--accent-text)]'
                 }`}
               >
                 {item.label}
@@ -899,7 +899,7 @@ export function AdminPage({onDataChanged}: AdminPageProps) {
                   <button
                     type="submit"
                     disabled={savingProject}
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#0A0A0A] px-5 py-3 text-sm font-medium text-[#FAFAF8] dark:bg-[#F5F5F2] dark:text-[#0A0A0A]"
+                    className="btn-primary inline-flex w-full items-center justify-center gap-2 px-5 py-3 text-sm font-medium"
                   >
                     {savingProject ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -922,7 +922,7 @@ export function AdminPage({onDataChanged}: AdminPageProps) {
                     onDragStart={() => setDraggedId(p.id)}
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={() => handleDropOnRow(p.id)}
-                    className="flex items-center justify-between gap-4 rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-5"
+                    className="flex items-center justify-between gap-4 rounded-[22px] border border-[var(--border)] bg-[var(--surface)] p-5"
                   >
                     <div className="flex min-w-0 items-center gap-3">
                       <GripVertical
@@ -944,7 +944,7 @@ export function AdminPage({onDataChanged}: AdminPageProps) {
                       <button
                         type="button"
                         onClick={() => startEdit(p)}
-                        className="rounded-xl border border-[var(--border)] px-3 py-1.5 text-xs font-medium text-[var(--text)] hover:border-[var(--accent)]"
+                        className="btn-secondary px-3.5 py-1.5 text-xs font-medium"
                       >
                         Edit
                       </button>
@@ -952,7 +952,7 @@ export function AdminPage({onDataChanged}: AdminPageProps) {
                         type="button"
                         onClick={() => handleDeleteProject(p.id)}
                         aria-label={`Delete ${p.title}`}
-                        className="rounded-xl border border-[var(--border)] p-2 text-[var(--muted)] hover:text-red-500"
+                        className="rounded-full border border-[var(--border)] p-2 text-[var(--muted)] transition-colors hover:border-red-400 hover:text-red-500"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
@@ -1039,10 +1039,10 @@ export function AdminPage({onDataChanged}: AdminPageProps) {
                       <button
                         type="button"
                         onClick={() => handleToggleTestimonial(t.id, !t.approved)}
-                        className={`rounded-xl px-3.5 py-1.5 text-xs font-medium ${
+                        className={`rounded-full px-4 py-1.5 text-xs font-medium transition-colors ${
                           t.approved
-                            ? 'bg-[var(--accent)] text-[#0A0A0A]'
-                            : 'border border-[var(--border)] text-[var(--text)]'
+                            ? 'bg-[var(--pop)] text-[var(--pop-contrast)]'
+                            : 'btn-secondary'
                         }`}
                       >
                         {t.approved ? 'Approved' : 'Approve'}
@@ -1050,7 +1050,7 @@ export function AdminPage({onDataChanged}: AdminPageProps) {
                       <button
                         type="button"
                         onClick={() => handleDeleteTestimonial(t.id)}
-                        className="rounded-xl border border-[var(--border)] p-2 text-[var(--muted)] hover:text-red-500"
+                        className="rounded-full border border-[var(--border)] p-2 text-[var(--muted)] transition-colors hover:border-red-400 hover:text-red-500"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
@@ -1095,7 +1095,7 @@ export function AdminPage({onDataChanged}: AdminPageProps) {
                     type="button"
                     onClick={handleExportSubscribersCsv}
                     disabled={subscribers.length === 0}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3.5 py-2 text-xs font-medium text-[var(--text)] transition-colors hover:border-[var(--accent)] disabled:opacity-50"
+                    className="btn-secondary inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium disabled:opacity-50"
                   >
                     <Download className="h-3.5 w-3.5" aria-hidden="true" />
                     <span>Export CSV</span>
@@ -1309,7 +1309,7 @@ export function AdminPage({onDataChanged}: AdminPageProps) {
 
               <button
                 type="submit"
-                className="rounded-xl bg-[#0A0A0A] px-6 py-2.5 text-sm font-medium text-[#FAFAF8] dark:bg-[#F5F5F2] dark:text-[#0A0A0A]"
+                className="btn-primary px-6 py-2.5 text-sm font-medium"
               >
                 Save settings
               </button>

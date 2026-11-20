@@ -1,12 +1,11 @@
 import {motion} from 'motion/react';
 import {useEffect, useState} from 'react';
 import {siteContent} from '../content/site';
+import {Wordmark} from './Wordmark';
 
 interface LoadingCurtainProps {
   onComplete: () => void;
 }
-
-const LETTERS = 'OJAS AWASTHI'.split('');
 
 export function LoadingCurtain({onComplete}: LoadingCurtainProps) {
   const [shouldShow, setShouldShow] = useState<boolean>(() => {
@@ -100,24 +99,9 @@ export function LoadingCurtain({onComplete}: LoadingCurtainProps) {
           />
         </div>
 
-        {/* 2. OJAS AWASTHI masked letter-by-letter reveal */}
-        <div className="my-8 flex flex-wrap items-center justify-center overflow-hidden">
-          {LETTERS.map((char, idx) => (
-            <span key={`${char}-${idx}`} className="inline-block overflow-hidden">
-              <motion.span
-                initial={{y: '115%', opacity: 0}}
-                animate={{y: '0%', opacity: 1}}
-                transition={{
-                  duration: 0.65,
-                  delay: 0.35 + idx * 0.045,
-                  ease: [0.16, 1, 0.3, 1],
-                }}
-                className="inline-block font-serif-display text-4xl tracking-wide sm:text-6xl"
-              >
-                {char === ' ' ? '\u00A0' : char}
-              </motion.span>
-            </span>
-          ))}
+        {/* 2. Ojas Awasthi masked letter-by-letter reveal */}
+        <div className="my-8 flex items-center justify-center text-[#F5F5F2]">
+          <Wordmark variant="loader" animateIn />
         </div>
 
         {/* 3. Synced progress line & 0-100% counter */}

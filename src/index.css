@@ -1,6 +1,24 @@
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
 
+@font-face {
+  font-family: 'Instrument Serif Fallback';
+  src: local('Georgia'), local('Times New Roman');
+  size-adjust: 88%;
+  ascent-override: 102%;
+  descent-override: 28%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Bricolage Grotesque Fallback';
+  src: local('Arial'), local('Helvetica Neue'), local('Helvetica');
+  size-adjust: 97%;
+  ascent-override: 95%;
+  descent-override: 24%;
+  line-gap-override: 0%;
+}
+
 :root {
   --bg: #FAFAF8;
   --surface: #F3F2EE;
@@ -9,6 +27,7 @@
   --border: #E8E8E4;
   --accent: #C8A97E;
   --accent-text: #856639;
+  --wordmark-shimmer-peak: #6E532E;
 }
 
 .dark {
@@ -19,6 +38,7 @@
   --border: #1F1F1F;
   --accent: #C8A97E;
   --accent-text: #C8A97E;
+  --wordmark-shimmer-peak: #DCC39E;
 }
 
 @layer base {
@@ -82,9 +102,111 @@
   animation-play-state: paused;
 }
 
+/* Display wordmark typography & animations */
+.font-wordmark-serif {
+  font-family: 'Instrument Serif', 'Instrument Serif Fallback', Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+}
+
+.font-wordmark-grotesk {
+  font-family: 'Bricolage Grotesque', 'Bricolage Grotesque Fallback', system-ui, -apple-system, sans-serif;
+  font-style: normal;
+  font-weight: 800;
+}
+
+@keyframes wordmark-sparkle-spin {
+  from {
+    transform: rotate(12deg);
+  }
+  to {
+    transform: rotate(372deg);
+  }
+}
+
+.wordmark-sparkle {
+  transform: rotate(12deg);
+  animation: wordmark-sparkle-spin 20s linear infinite;
+  will-change: transform;
+}
+
+@keyframes wordmark-shimmer-sweep {
+  0%,
+  72%,
+  100% {
+    background-position: 100% 50%;
+  }
+  20% {
+    background-position: 0% 50%;
+  }
+}
+
+.wordmark-shimmer {
+  background-image: linear-gradient(
+    112deg,
+    var(--text) 0%,
+    var(--text) 38%,
+    var(--wordmark-shimmer-peak) 50%,
+    var(--text) 62%,
+    var(--text) 100%
+  );
+  background-size: 280% 100%;
+  background-position: 100% 50%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  animation-name: wordmark-shimmer-sweep;
+  animation-duration: 6s;
+  animation-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
+  animation-iteration-count: infinite;
+}
+
+@keyframes wordmark-underline-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.wordmark-underline-path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+.wordmark-underline-path--drawn {
+  animation: wordmark-underline-draw 0.75s cubic-bezier(0.16, 1, 0.3, 1) 1.05s forwards;
+}
+
+.wordmark-wave-letter {
+  transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-marquee {
     animation: none;
+  }
+  .wordmark-sparkle {
+    animation: none;
+    transform: rotate(12deg);
+  }
+  .wordmark-shimmer {
+    animation: none;
+    background: none;
+    color: var(--text);
+    -webkit-text-fill-color: var(--text);
+  }
+  .wordmark-underline-path,
+  .wordmark-underline-path--drawn {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+  .wordmark-wave-letter {
+    transition: none;
+    transform: none !important;
   }
   html {
     scroll-behavior: auto !important;

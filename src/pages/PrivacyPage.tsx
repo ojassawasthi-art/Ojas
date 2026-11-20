@@ -104,9 +104,9 @@ export function PrivacyPage() {
                 e.preventDefault();
                 navigate('/');
               }}
-              className="inline-flex items-center gap-2 text-xs font-medium text-[var(--muted)] transition-colors hover:text-[var(--text)]"
+              className="group inline-flex items-center gap-2 text-xs font-medium text-[var(--muted)] transition-colors hover:text-[var(--accent-text)]"
             >
-              <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
+              <ArrowLeft className="h-3.5 w-3.5 transition-colors group-hover:text-[var(--accent-text)]" aria-hidden="true" />
               <span>Back to home</span>
             </a>
           </div>

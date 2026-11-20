@@ -48,7 +48,7 @@ export function BookCover({
             ? 'transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)'
             : 'transform 0.1s linear',
       }}
-      className="relative aspect-[3/4] w-full max-w-[260px] overflow-hidden rounded-2xl border border-[var(--border)] bg-[#111110] text-[#F5F5F2] shadow-lg"
+      className="relative aspect-[3/4] w-full max-w-[260px] overflow-hidden rounded-[22px] border border-[var(--border)] bg-[#1C1114] text-[#FFF1EE] shadow-lg"
     >
       {coverImage && !imgError ? (
         <img
@@ -67,51 +67,53 @@ export function BookCover({
           {/* Spine shadow line */}
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute top-0 bottom-0 left-3 w-px bg-white/10"
+            className="pointer-events-none absolute top-0 bottom-0 left-3 w-px bg-[#FF6B87]/20"
           />
 
           {/* Minimal geometric SVG motif */}
           <svg
             viewBox="0 0 180 180"
             aria-hidden="true"
-            className="pointer-events-none absolute right-0 bottom-10 h-44 w-44 opacity-20"
+            className="pointer-events-none absolute right-0 bottom-10 h-44 w-44 opacity-25"
           >
             {motif === 'axis' ? (
-              <g stroke="#C8A97E" fill="none" strokeWidth="1">
+              <g stroke="#FF6B87" fill="none" strokeWidth="1">
                 <circle cx="110" cy="90" r="56" />
                 <circle cx="110" cy="90" r="34" />
                 <line x1="20" y1="90" x2="170" y2="90" />
                 <line x1="110" y1="15" x2="110" y2="165" />
+                <circle cx="110" cy="90" r="3" fill="#FFD166" stroke="none" />
               </g>
             ) : (
-              <g stroke="#C8A97E" fill="none" strokeWidth="1">
+              <g stroke="#FF6B87" fill="none" strokeWidth="1">
                 <circle cx="88" cy="90" r="46" />
                 <circle cx="116" cy="90" r="46" />
                 <circle cx="102" cy="90" r="22" />
+                <circle cx="102" cy="90" r="3" fill="#FFD166" stroke="none" />
               </g>
             )}
           </svg>
 
           <div className="relative z-10 pl-2">
-            <p className="text-[11px] tracking-widest text-[#C8A97E]">
+            <p className="text-[11px] tracking-widest text-[#FF6B87]">
               {publisher}
             </p>
           </div>
 
           <div className="relative z-10 pl-2">
-            <h4 className="font-serif-display text-2xl leading-tight text-[#F5F5F2] sm:text-[28px]">
+            <h4 className="font-serif-display text-2xl leading-tight text-[#FFF1EE] sm:text-[28px]">
               {title}
             </h4>
             {subtitle && (
-              <p className="mt-2 text-xs leading-relaxed text-[#A8A8A2]">
+              <p className="mt-2 text-xs leading-relaxed text-[#C4A5AA]">
                 {subtitle}
               </p>
             )}
           </div>
 
-          <div className="relative z-10 flex items-center justify-between border-t border-white/10 pt-3 pl-2 text-xs text-[#C8A97E]">
+          <div className="relative z-10 flex items-center justify-between border-t border-[#362126] pt-3 pl-2 text-xs text-[#FF6B87]">
             <span>{author}</span>
-            <span className="font-serif-display italic">OA</span>
+            <span className="font-serif-display italic text-[#FFD166]">OA</span>
           </div>
         </div>
       )}

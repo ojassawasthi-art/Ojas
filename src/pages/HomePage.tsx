@@ -12,6 +12,7 @@ import {PortraitArch} from '../components/PortraitArch';
 import {ProjectCard} from '../components/ProjectCard';
 import {SeoHead} from '../components/SeoHead';
 import {TestimonialsSection} from '../components/TestimonialsSection';
+import {Wordmark} from '../components/Wordmark';
 import {siteContent} from '../content/site';
 import {useRouter} from '../context/RouterContext';
 import {getNewsletterUrl} from '../lib/newsletter';
@@ -147,15 +148,14 @@ export function HomePage({
                 </motion.p>
               )}
 
-              <div className="mt-4 overflow-hidden">
-                <motion.h1
-                  initial={{y: '100%', opacity: 0}}
-                  animate={introDone ? {y: '0%', opacity: 1} : {y: '100%', opacity: 0}}
-                  transition={{duration: 0.7, delay: 0.12, ease: [0.16, 1, 0.3, 1]}}
-                  className="font-serif-display text-[clamp(3.25rem,9vw,7.5rem)] leading-[0.94] tracking-tight text-[var(--text)]"
+              <div className="mt-4">
+                <h1
+                  aria-label={siteContent.profile.name}
+                  className="text-[var(--text)]"
                 >
-                  {siteContent.profile.name}
-                </motion.h1>
+                  <span className="sr-only">{siteContent.profile.name}</span>
+                  <Wordmark variant="hero" animateIn={introDone} />
+                </h1>
               </div>
 
               <motion.p

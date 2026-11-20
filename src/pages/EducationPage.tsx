@@ -55,7 +55,7 @@ export function EducationPage() {
             {siteContent.education.map((edu) => (
               <article
                 key={edu.institution}
-                className="flex flex-col justify-between rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-8"
+                className="card-elevated flex flex-col justify-between bg-[var(--surface)] p-8"
               >
                 <div>
                   <p className="font-mono-tabular text-xs text-[var(--accent-text)]">
@@ -76,7 +76,7 @@ export function EducationPage() {
           </div>
 
           {/* CS Preparation Clarification */}
-          <div className="mt-12 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-8">
+          <div className="card-elevated mt-12 bg-[var(--surface)] p-8">
             <p className="text-xs tracking-widest text-[var(--accent-text)]">
               Professional Preparation
             </p>
@@ -126,10 +126,10 @@ export function EducationPage() {
               {siteContent.certifications.map((cert) => (
                 <article
                   key={cert.id}
-                  className="flex flex-col justify-between rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-7"
+                  className="card-elevated flex flex-col justify-between bg-[var(--surface)] p-7"
                 >
                   <div>
-                    <p className="text-xs text-[var(--accent-text)]">
+                    <p className="text-xs font-medium text-[var(--accent-text)]">
                       {cert.issuer}
                     </p>
                     <h3 className="mt-2 font-serif-display text-2xl tracking-tight text-[var(--text)]">
@@ -139,12 +139,18 @@ export function EducationPage() {
                       {cert.issued}
                       {cert.expires ? ` · ${cert.expires}` : ''}
                     </p>
-                    <p className="mt-3 text-xs text-[var(--muted)]">
-                      {cert.skills.join(' · ')}
-                    </p>
+                    {cert.skills.length > 0 && (
+                      <div className="mt-4 flex flex-wrap gap-1.5">
+                        {cert.skills.map((skill) => (
+                          <span key={skill} className="tag-pill">
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                    )}
 
                     {cert.credentialId && (
-                      <div className="mt-4 flex items-center justify-between gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-2">
+                      <div className="mt-4 flex items-center justify-between gap-2 rounded-full border border-[var(--border)] bg-[var(--bg)] px-3.5 py-2">
                         <span className="font-mono-tabular truncate text-[11px] text-[var(--text)]">
                           {cert.credentialId}
                         </span>
@@ -181,7 +187,7 @@ export function EducationPage() {
                         <span>Verify credential</span>
                         <ArrowUpRight
                           aria-hidden="true"
-                          className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                          className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[var(--accent-text)]"
                         />
                       </a>
                     </div>

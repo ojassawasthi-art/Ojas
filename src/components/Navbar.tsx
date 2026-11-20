@@ -77,7 +77,7 @@ export function Navbar() {
           hidden && !mobileOpen ? '-translate-y-full' : 'translate-y-0'
         } ${
           scrolled
-            ? 'border-b border-[var(--border)] bg-[#FAFAF8]/85 backdrop-blur-md dark:bg-[#0A0A0A]/85'
+            ? 'border-b border-[var(--border)] bg-[#FFF4F1]/85 backdrop-blur-md dark:bg-[#120A0C]/85'
             : 'bg-transparent'
         }`}
       >
@@ -128,7 +128,7 @@ export function Navbar() {
               type="button"
               onClick={toggleTheme}
               aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-              className="inline-flex h-10 items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3.5 text-xs font-medium text-[var(--text)] whitespace-nowrap shrink-0 transition-colors hover:border-[var(--accent)]"
+              className="group btn-secondary inline-flex h-10 items-center gap-2 border-[var(--border)] bg-[var(--surface)] px-4 text-xs font-medium text-[var(--text)] whitespace-nowrap shrink-0 hover:border-[var(--accent)] hover:text-[var(--accent-text)]"
             >
               {theme === 'dark' ? (
                 <>
@@ -148,7 +148,7 @@ export function Navbar() {
               onClick={() => setMobileOpen((prev) => !prev)}
               aria-label={mobileOpen ? 'Close navigation menu' : 'Open navigation menu'}
               aria-expanded={mobileOpen}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--border)] text-[var(--text)] md:hidden"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface)] text-[var(--text)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent-text)] md:hidden"
             >
               {mobileOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
             </button>
@@ -164,7 +164,7 @@ export function Navbar() {
             animate={{opacity: 1, y: 0}}
             exit={{opacity: 0, y: -16}}
             transition={{duration: 0.28, ease: [0.16, 1, 0.3, 1]}}
-            className="fixed inset-0 z-20 flex flex-col justify-between bg-[#FAFAF8] px-6 pt-24 pb-10 dark:bg-[#0A0A0A] md:hidden"
+            className="fixed inset-0 z-20 flex flex-col justify-between bg-[#FFF4F1] px-6 pt-24 pb-10 dark:bg-[#120A0C] md:hidden"
           >
             <nav aria-label="Mobile navigation" className="flex flex-col gap-5">
               {navItems.map((item, idx) => (
@@ -200,7 +200,7 @@ export function Navbar() {
               <span>{siteContent.profile.location}</span>
               <a
                 href={`mailto:${siteContent.contact.email}`}
-                className="text-[var(--text)] underline underline-offset-4"
+                className="text-[var(--text)] underline decoration-[var(--accent)] underline-offset-4 hover:text-[var(--accent-text)]"
               >
                 {siteContent.contact.email}
               </a>

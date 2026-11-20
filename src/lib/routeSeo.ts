@@ -237,7 +237,7 @@ export function getBreadcrumbSchema(
 }
 
 function renderShell(innerHtml: string): string {
-  return `<div class="min-h-screen bg-[#FAFAF8] text-[#0A0A0A] dark:bg-[#0A0A0A] dark:text-[#F5F5F2]">
+  return `<div class="min-h-screen bg-[#FFF4F1] text-[#1A0F10] dark:bg-[#120A0C] dark:text-[#FFF1EE]">
   <header class="mx-auto flex h-16 max-w-[1200px] items-center justify-between px-6">
     <a href="/">OA</a>
     <nav aria-label="Primary" class="flex flex-wrap gap-6 text-sm">
@@ -253,7 +253,7 @@ function renderShell(innerHtml: string): string {
   <main id="main-content" class="mx-auto max-w-[1200px] px-6 py-16">
     ${innerHtml}
   </main>
-  <footer class="mx-auto max-w-[1200px] border-t border-[#E8E8E4] px-6 py-8 text-xs">
+  <footer class="mx-auto max-w-[1200px] border-t border-[#F5D9D3] px-6 py-8 text-xs dark:border-[#362126]">
     <span>Official website of ${escapeHtml(siteContent.profile.name)} · ${escapeHtml(siteContent.profile.location)}</span>
   </footer>
 </div>`;

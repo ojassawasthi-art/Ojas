@@ -212,10 +212,10 @@ export function AboutPage() {
               {siteContent.certifications.map((cert) => (
                 <article
                   key={cert.id}
-                  className="flex flex-col justify-between rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-7"
+                  className="card-elevated flex flex-col justify-between bg-[var(--surface)] p-7"
                 >
                   <div>
-                    <p className="text-xs text-[var(--accent-text)]">
+                    <p className="text-xs font-medium text-[var(--accent-text)]">
                       {cert.issuer}
                     </p>
                     <h3 className="mt-2 font-serif-display text-2xl text-[var(--text)]">
@@ -225,19 +225,25 @@ export function AboutPage() {
                       {cert.issued}
                       {cert.expires ? ` · ${cert.expires}` : ''}
                     </p>
-                    <p className="mt-3 text-xs text-[var(--muted)]">
-                      {cert.skills.join(' · ')}
-                    </p>
+                    {cert.skills.length > 0 && (
+                      <div className="mt-4 flex flex-wrap gap-1.5">
+                        {cert.skills.map((skill) => (
+                          <span key={skill} className="tag-pill">
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                    )}
 
                     {cert.credentialId && (
-                      <div className="mt-4 flex items-center justify-between gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-2">
+                      <div className="mt-4 flex items-center justify-between gap-2 rounded-full border border-[var(--border)] bg-[var(--bg)] px-3.5 py-2">
                         <span className="font-mono-tabular truncate text-[11px] text-[var(--text)]">
                           {cert.credentialId}
                         </span>
                         <button
                           type="button"
                           onClick={() => handleCopy(cert.credentialId)}
-                          className="inline-flex shrink-0 items-center gap-1 text-[11px] text-[var(--accent-text)]"
+                          className="inline-flex shrink-0 items-center gap-1 text-[11px] font-medium text-[var(--accent-text)]"
                         >
                           {copiedId === cert.credentialId ? (
                             <>
@@ -264,7 +270,7 @@ export function AboutPage() {
                         className="group inline-flex items-center gap-1.5 text-xs font-medium text-[var(--text)] hover:text-[var(--accent-text)]"
                       >
                         <span>Verify credential</span>
-                        <ArrowUpRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                        <ArrowUpRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[var(--accent-text)]" />
                       </a>
                     </div>
                   )}
@@ -329,7 +335,7 @@ export function AboutPage() {
             <h2 className="font-serif-display text-4xl tracking-tight text-[var(--text)]">
               Common questions
             </h2>
-            <dl className="mt-8 divide-y divide-[var(--border)] rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-7">
+            <dl className="card-elevated mt-8 divide-y divide-[var(--border)] bg-[var(--surface)] px-7">
               {siteContent.faqs.map((faq) => (
                 <div key={faq.question} className="py-6" lang={faq.lang}>
                   <dt className="font-serif-display text-2xl text-[var(--text)]">

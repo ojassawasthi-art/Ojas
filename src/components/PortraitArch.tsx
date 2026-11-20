@@ -37,7 +37,7 @@ export function PortraitArch() {
       }}
       className="relative mx-auto w-full max-w-[360px] lg:ml-auto lg:mr-0"
     >
-      <div className="relative aspect-[4/5] w-full overflow-hidden rounded-t-full rounded-b-[24px] border border-[var(--border)] bg-[var(--surface)] shadow-sm">
+      <div className="relative aspect-[4/5] w-full overflow-hidden rounded-t-full rounded-b-[24px] border border-[var(--border)] bg-[var(--surface)] shadow-sm transition-colors duration-200 hover:border-[var(--accent)]">
         {!imgFailed ? (
           <img
             src={siteContent.profile.photoPath}
@@ -51,13 +51,13 @@ export function PortraitArch() {
             className="h-full w-full object-cover"
           />
         ) : (
-          <div className="flex h-full w-full flex-col items-center justify-between bg-gradient-to-b from-[#F4F1EA] to-[#EAE4D8] p-8 text-[#0A0A0A] dark:from-[#151412] dark:to-[#0F0E0C] dark:text-[#F5F5F2]">
-            <div className="pt-4 text-[11px] tracking-[0.2em] text-[var(--muted)]">
+          <div className="flex h-full w-full flex-col items-center justify-between bg-gradient-to-b from-[#FFF4F1] to-[#FFE2DC] p-8 text-[#1A0F10] dark:from-[#1C1114] dark:to-[#2A171C] dark:text-[#FFF1EE]">
+            <div className="pt-4 text-[11px] tracking-[0.2em] text-[var(--accent-text)]">
               {siteContent.profile.city} · {siteContent.profile.country}
             </div>
 
             <div className="flex flex-col items-center">
-              <div className="flex h-28 w-28 items-center justify-center rounded-full border border-[var(--accent)]/40">
+              <div className="flex h-28 w-28 items-center justify-center rounded-full border border-[var(--accent)]/60 bg-[var(--accent-soft)]">
                 <span className="font-serif-display text-5xl tracking-tight">
                   {siteContent.profile.monogram}
                 </span>

@@ -29,14 +29,14 @@ export function NotFoundPage() {
             <button
               type="button"
               onClick={() => navigate('/')}
-              className="rounded-xl bg-[#0A0A0A] px-6 py-3 text-sm font-medium text-[#FAFAF8] dark:bg-[#F5F5F2] dark:text-[#0A0A0A]"
+              className="btn-primary px-7 py-3 text-sm font-medium"
             >
               Back to Home
             </button>
             <button
               type="button"
               onClick={() => navigate('/work')}
-              className="rounded-xl border border-[var(--border)] px-6 py-3 text-sm font-medium text-[var(--text)]"
+              className="btn-secondary px-7 py-3 text-sm font-medium"
             >
               View Work
             </button>

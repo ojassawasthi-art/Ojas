@@ -32,7 +32,7 @@ export function BlogPage({slug}: BlogPageProps) {
               <button
                 type="button"
                 onClick={() => navigate('/blog')}
-                className="mt-8 rounded-xl border border-[var(--border)] px-5 py-2.5 text-sm font-medium text-[var(--text)]"
+                className="btn-secondary mt-8 px-6 py-2.5 text-sm font-medium"
               >
                 Back to articles
               </button>
@@ -62,9 +62,9 @@ export function BlogPage({slug}: BlogPageProps) {
                 e.preventDefault();
                 navigate('/blog');
               }}
-              className="inline-flex items-center gap-2 text-xs font-medium text-[var(--muted)] hover:text-[var(--text)]"
+              className="group inline-flex items-center gap-2 text-xs font-medium text-[var(--muted)] transition-colors hover:text-[var(--accent-text)]"
             >
-              <ArrowLeft className="h-3.5 w-3.5" />
+              <ArrowLeft className="h-3.5 w-3.5 transition-colors group-hover:text-[var(--accent-text)]" />
               <span>All articles</span>
             </a>
 
@@ -134,7 +134,7 @@ export function BlogPage({slug}: BlogPageProps) {
                   e.preventDefault();
                   navigate(`/blog/${post.slug}`);
                 }}
-                className="group flex flex-col justify-between rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-8 transition-colors hover:border-[var(--accent)]"
+                className="card-elevated group flex flex-col justify-between bg-[var(--surface)] p-8"
               >
                 <div>
                   <div className="flex items-center gap-2 text-xs text-[var(--muted)]">
@@ -150,9 +150,9 @@ export function BlogPage({slug}: BlogPageProps) {
                   </p>
                 </div>
 
-                <div className="mt-6 inline-flex items-center gap-1.5 text-xs font-medium text-[var(--text)]">
+                <div className="mt-6 inline-flex items-center gap-1.5 text-xs font-medium text-[var(--text)] transition-colors group-hover:text-[var(--accent-text)]">
                   <span>Read article</span>
-                  <ArrowUpRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                  <ArrowUpRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[var(--accent-text)]" />
                 </div>
               </a>
             ))}

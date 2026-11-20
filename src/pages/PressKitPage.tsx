@@ -60,7 +60,7 @@ export function PressKitPage() {
               {bios.map((item) => (
                 <article
                   key={item.key}
-                  className="rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-7"
+                  className="card-elevated bg-[var(--surface)] p-7"
                 >
                   <div className="flex items-center justify-between gap-4">
                     <h2 className="font-serif-display text-2xl text-[var(--text)]">
@@ -69,7 +69,7 @@ export function PressKitPage() {
                     <button
                       type="button"
                       onClick={() => copyText(item.key, item.text)}
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-xs font-medium text-[var(--text)] transition-colors hover:border-[var(--accent)]"
+                      className="btn-secondary inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium"
                     >
                       {copiedKey === item.key ? (
                         <>
@@ -93,7 +93,7 @@ export function PressKitPage() {
 
             {/* Portrait & Links */}
             <div className="space-y-8 lg:col-span-5">
-              <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-7">
+              <div className="card-elevated bg-[var(--surface)] p-7">
                 <h2 className="font-serif-display text-2xl text-[var(--text)]">
                   Portrait
                 </h2>
@@ -107,15 +107,15 @@ export function PressKitPage() {
                   <a
                     href={siteContent.profile.photoPath}
                     download="ojas-awasthi-portrait.jpg"
-                    className="inline-flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-2 text-xs font-medium text-[var(--text)] transition-colors hover:border-[var(--accent)]"
+                    className="btn-secondary group inline-flex items-center gap-2 px-4 py-2 text-xs font-medium"
                   >
                     <span>Portrait asset (/images/ojas.jpg)</span>
-                    <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
+                    <ArrowUpRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden="true" />
                   </a>
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-7">
+              <div className="card-elevated bg-[var(--surface)] p-7">
                 <h2 className="font-serif-display text-2xl text-[var(--text)]">
                   Official Links
                 </h2>
@@ -151,7 +151,7 @@ export function PressKitPage() {
               {siteContent.books.map((book) => (
                 <article
                   key={book.id}
-                  className="flex flex-col items-center gap-6 rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-7 sm:flex-row"
+                  className="card-elevated flex flex-col items-center gap-6 bg-[var(--surface)] p-7 sm:flex-row"
                 >
                   <div className="shrink-0 sm:w-[180px]">
                     <BookCover

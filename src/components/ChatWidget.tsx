@@ -286,7 +286,7 @@ export default function ChatWidget({
             prefersReducedMotion ? {opacity: 0} : {opacity: 0, y: 10, scale: 0.98}
           }
           transition={panelTransition}
-          className="fixed right-[max(1rem,env(safe-area-inset-right))] bottom-[max(1rem,env(safe-area-inset-bottom))] z-[45] flex max-h-[min(78vh,560px)] w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] shadow-[0_20px_60px_rgba(10,10,10,0.16)] sm:right-6 sm:bottom-6 sm:w-[390px] dark:shadow-[0_24px_64px_rgba(0,0,0,0.6)]"
+          className="fixed right-[max(1rem,env(safe-area-inset-right))] bottom-[max(1rem,env(safe-area-inset-bottom))] z-[45] flex max-h-[min(78vh,560px)] w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-[22px] border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] shadow-[0_20px_60px_rgba(26,15,16,0.16)] sm:right-6 sm:bottom-6 sm:w-[390px] dark:shadow-[0_24px_64px_rgba(0,0,0,0.65)]"
         >
           {/* Header */}
           <div className="flex items-center justify-between gap-3 border-b border-[var(--border)] bg-[var(--surface)] px-5 py-3.5">
@@ -294,7 +294,7 @@ export default function ChatWidget({
               <div className="flex items-center gap-2">
                 <span
                   aria-hidden="true"
-                  className="h-2 w-2 shrink-0 bg-[#C8A97E]"
+                  className="h-2.5 w-2.5 shrink-0 rounded-full bg-[var(--pop)] ring-2 ring-[var(--accent)]/40"
                 />
                 <h2
                   id="chat-widget-title"
@@ -309,17 +309,20 @@ export default function ChatWidget({
               <button
                 type="button"
                 onClick={handleReset}
-                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg)] px-2.5 text-xs font-medium whitespace-nowrap text-[var(--muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--text)]"
+                className="group inline-flex h-8 items-center gap-1.5 rounded-full border border-[var(--border)] bg-[var(--bg)] px-3 text-xs font-medium whitespace-nowrap text-[var(--muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent-text)]"
                 aria-label="Reset chat"
               >
-                <RotateCcw className="h-3 w-3" aria-hidden="true" />
+                <RotateCcw
+                  className="h-3 w-3 transition-colors group-hover:text-[var(--accent-text)]"
+                  aria-hidden="true"
+                />
                 <span>Reset chat</span>
               </button>
               <button
                 type="button"
                 onClick={onClose}
                 aria-label="Close chat"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--text)]"
+                className="group inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--bg)] text-[var(--muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent-text)]"
               >
                 <X className="h-4 w-4" aria-hidden="true" />
               </button>
@@ -341,9 +344,9 @@ export default function ChatWidget({
                 }`}
               >
                 <div
-                  className={`max-w-[85%] rounded-xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
+                  className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
                     msg.role === 'user'
-                      ? 'bg-[#0A0A0A] text-[#FAFAF8] dark:bg-[#F5F5F2] dark:text-[#0A0A0A]'
+                      ? 'bg-[var(--accent-button)] text-[var(--accent-contrast)]'
                       : 'border border-[var(--border)] bg-[var(--surface)] text-[var(--text)]'
                   }`}
                 >
@@ -366,7 +369,7 @@ export default function ChatWidget({
                       key={chip}
                       type="button"
                       onClick={() => void sendMessage(chip)}
-                      className="rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-1.5 text-left text-xs text-[var(--text)] transition-colors hover:border-[#C8A97E] hover:bg-[var(--surface)]"
+                      className="rounded-full border border-[var(--accent)]/25 bg-[var(--accent-soft)] px-3 py-1.5 text-left text-xs font-medium text-[var(--accent-text)] transition-colors hover:border-[var(--accent)] hover:bg-[var(--surface)]"
                     >
                       {chip}
                     </button>
@@ -378,9 +381,9 @@ export default function ChatWidget({
             {/* Typing indicator */}
             {isLoading && (
               <div className="flex justify-start">
-                <div className="inline-flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3.5 py-2.5 text-xs text-[var(--muted)]">
+                <div className="inline-flex items-center gap-2 rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-3.5 py-2.5 text-xs text-[var(--muted)]">
                   <Loader2
-                    className={`h-3.5 w-3.5 text-[#C8A97E] ${
+                    className={`h-3.5 w-3.5 text-[var(--accent)] ${
                       prefersReducedMotion ? '' : 'animate-spin'
                     }`}
                     aria-hidden="true"
@@ -394,13 +397,13 @@ export default function ChatWidget({
             {isOffline && (
               <div
                 role="status"
-                className="rounded-xl border border-[#C8A97E]/50 bg-[var(--surface)] px-4 py-3 text-xs leading-relaxed text-[var(--text)]"
+                className="rounded-2xl border border-[var(--accent)]/45 bg-[var(--surface)] px-4 py-3 text-xs leading-relaxed text-[var(--text)]"
               >
                 <p className="font-medium">
                   Chat is offline, email me at{' '}
                   <a
                     href={`mailto:${ADMIN_EMAIL}`}
-                    className="inline-flex items-center gap-1 underline decoration-[#C8A97E] underline-offset-2 hover:text-[var(--accent-text)]"
+                    className="inline-flex items-center gap-1 text-[var(--accent-text)] underline decoration-[var(--accent)] underline-offset-2"
                   >
                     <Mail className="h-3 w-3" aria-hidden="true" />
                     <span>{ADMIN_EMAIL}</span>
@@ -437,13 +440,13 @@ export default function ChatWidget({
                 placeholder="Ask a question..."
                 maxLength={500}
                 disabled={isLoading}
-                className="min-w-0 flex-1 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3.5 py-2.5 text-sm text-[var(--text)] placeholder:text-[var(--muted)] focus:border-[#C8A97E] focus:outline-none disabled:opacity-60"
+                className="min-w-0 flex-1 rounded-full border border-[var(--border)] bg-[var(--surface)] px-4 py-2.5 text-sm text-[var(--text)] placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:outline-none disabled:opacity-60"
               />
               <button
                 type="submit"
                 disabled={isLoading || !input.trim()}
                 aria-label="Send message"
-                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0A0A0A] text-[#FAFAF8] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-[#F5F5F2] dark:text-[#0A0A0A]"
+                className="btn-primary inline-flex h-10 w-10 shrink-0 items-center justify-center disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <ArrowUp className="h-4 w-4" aria-hidden="true" />
               </button>
@@ -454,7 +457,7 @@ export default function ChatWidget({
                 AI answers may contain mistakes. For anything important, email{' '}
                 <a
                   href={`mailto:${ADMIN_EMAIL}`}
-                  className="text-[var(--text)] underline underline-offset-2"
+                  className="text-[var(--accent-text)] underline decoration-[var(--accent)] underline-offset-2"
                 >
                   Ojas
                 </a>

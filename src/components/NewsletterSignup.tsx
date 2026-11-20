@@ -222,7 +222,7 @@ export default function NewsletterSignup({
             <button
               type="submit"
               disabled={submitting}
-              className="inline-flex h-[34px] items-center justify-center gap-1.5 rounded-xl bg-[#0A0A0A] px-4 text-xs font-medium whitespace-nowrap shrink-0 text-[#FAFAF8] transition-opacity hover:opacity-90 disabled:opacity-60 dark:bg-[#F5F5F2] dark:text-[#0A0A0A]"
+              className="btn-primary inline-flex h-[34px] shrink-0 items-center justify-center gap-1.5 px-4 text-xs font-medium whitespace-nowrap disabled:opacity-60"
             >
               {submitting ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
@@ -282,7 +282,7 @@ export default function NewsletterSignup({
             <button
               type="submit"
               disabled={submitting}
-              className="inline-flex h-[42px] w-full items-center justify-center gap-2 rounded-xl bg-[#0A0A0A] px-5 text-sm font-medium whitespace-nowrap text-[#FAFAF8] transition-opacity hover:opacity-90 disabled:opacity-60 dark:bg-[#F5F5F2] dark:text-[#0A0A0A]"
+              className="btn-primary inline-flex h-[42px] w-full items-center justify-center gap-2 px-5 text-sm font-medium whitespace-nowrap disabled:opacity-60"
             >
               {submitting ? (
                 <>
@@ -311,7 +311,7 @@ export default function NewsletterSignup({
             }}
             aria-invalid={Boolean(consentError)}
             aria-describedby={consentError ? `${consentId}-error` : undefined}
-            className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border border-[var(--border)] accent-[#C8A97E]"
+            className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border border-[var(--border)] accent-[var(--accent)]"
           />
           <label
             htmlFor={consentId}

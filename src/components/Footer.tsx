@@ -3,6 +3,7 @@ import {useEffect, useState} from 'react';
 import {siteContent} from '../content/site';
 import {useRouter} from '../context/RouterContext';
 import {getNewsletterUrl} from '../lib/newsletter';
+import {Wordmark} from './Wordmark';
 
 export function Footer() {
   const {navigate} = useRouter();
@@ -64,13 +65,15 @@ export function Footer() {
           <div className={newsletterUrl ? 'md:col-span-5' : 'md:col-span-7'}>
             <a
               href="/"
+              aria-label={siteContent.profile.name}
               onClick={(e) => {
                 e.preventDefault();
                 navigate('/');
               }}
-              className="font-serif-display text-2xl tracking-tight text-[var(--text)]"
+              className="inline-block text-[var(--text)]"
             >
-              {siteContent.profile.name}
+              <span className="sr-only">{siteContent.profile.name}</span>
+              <Wordmark variant="footer" />
             </a>
             <p className="mt-3 max-w-sm text-sm leading-relaxed text-[var(--muted)]">
               Official website of {siteContent.profile.name}.{' '}

@@ -116,7 +116,7 @@ export function ContactPage() {
                 <button
                   type="button"
                   onClick={handleCopyEmail}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-xs font-medium text-[var(--text)]"
+                  className="btn-secondary inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium"
                 >
                   {copied ? (
                     <>
@@ -141,7 +141,7 @@ export function ContactPage() {
                       href={social.url}
                       target={isExternal ? '_blank' : undefined}
                       rel={isExternal ? 'noopener noreferrer' : undefined}
-                      className="group flex items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-3 text-sm transition-colors hover:border-[var(--accent)]"
+                      className="card-elevated group flex items-center justify-between bg-[var(--surface)] px-4 py-3 text-sm"
                     >
                       <div>
                         <p className="font-medium text-[var(--text)]">
@@ -151,7 +151,7 @@ export function ContactPage() {
                           {social.handle}
                         </p>
                       </div>
-                      <ArrowUpRight className="h-4 w-4 text-[var(--muted)] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                      <ArrowUpRight className="h-4 w-4 text-[var(--muted)] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[var(--accent-text)]" />
                     </a>
                   );
                 })}
@@ -159,14 +159,14 @@ export function ContactPage() {
             </div>
 
             <div className="lg:col-span-7">
-              <div className="mb-5 inline-flex items-center gap-1 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-1">
+              <div className="mb-5 inline-flex items-center gap-1 rounded-full border border-[var(--border)] bg-[var(--surface)] p-1">
                 <button
                   type="button"
                   onClick={() => setTab('message')}
-                  className={`rounded-lg px-4 py-2 text-xs font-medium transition-colors ${
+                  className={`rounded-full px-4 py-2 text-xs font-medium transition-colors ${
                     tab === 'message'
-                      ? 'bg-[var(--bg)] text-[var(--text)] shadow-xs'
-                      : 'text-[var(--muted)] hover:text-[var(--text)]'
+                      ? 'bg-[var(--accent-button)] text-[var(--accent-contrast)] shadow-xs'
+                      : 'text-[var(--muted)] hover:text-[var(--accent-text)]'
                   }`}
                 >
                   Send a message
@@ -174,17 +174,17 @@ export function ContactPage() {
                 <button
                   type="button"
                   onClick={() => setTab('testimonial')}
-                  className={`rounded-lg px-4 py-2 text-xs font-medium transition-colors ${
+                  className={`rounded-full px-4 py-2 text-xs font-medium transition-colors ${
                     tab === 'testimonial'
-                      ? 'bg-[var(--bg)] text-[var(--text)] shadow-xs'
-                      : 'text-[var(--muted)] hover:text-[var(--text)]'
+                      ? 'bg-[var(--accent-button)] text-[var(--accent-contrast)] shadow-xs'
+                      : 'text-[var(--muted)] hover:text-[var(--accent-text)]'
                   }`}
                 >
                   Leave a testimonial
                 </button>
               </div>
 
-              <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-7 sm:p-10">
+              <div className="card-elevated bg-[var(--surface)] p-7 sm:p-10">
                 {tab === 'message' ? (
                   <ContactForm />
                 ) : (
@@ -292,7 +292,7 @@ export function ContactPage() {
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="inline-flex items-center gap-2 rounded-xl bg-[#0A0A0A] px-6 py-3 text-sm font-medium text-[#FAFAF8] transition-opacity hover:opacity-90 disabled:opacity-60 dark:bg-[#F5F5F2] dark:text-[#0A0A0A]"
+                      className="btn-primary inline-flex items-center gap-2 px-6 py-3 text-sm font-medium disabled:opacity-60"
                     >
                       {isSubmitting && (
                         <Loader2 className="h-4 w-4 animate-spin" />

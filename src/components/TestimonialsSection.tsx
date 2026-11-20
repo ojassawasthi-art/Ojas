@@ -51,7 +51,7 @@ export function TestimonialsSection({testimonials}: TestimonialsSectionProps) {
                 type="button"
                 onClick={handlePrev}
                 aria-label="Previous testimonial"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--border)] text-[var(--text)] transition-colors hover:border-[var(--accent)]"
+                className="btn-secondary inline-flex h-10 w-10 items-center justify-center"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
@@ -59,7 +59,7 @@ export function TestimonialsSection({testimonials}: TestimonialsSectionProps) {
                 type="button"
                 onClick={handleNext}
                 aria-label="Next testimonial"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--border)] text-[var(--text)] transition-colors hover:border-[var(--accent)]"
+                className="btn-secondary inline-flex h-10 w-10 items-center justify-center"
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
@@ -67,7 +67,7 @@ export function TestimonialsSection({testimonials}: TestimonialsSectionProps) {
           )}
         </div>
 
-        <div className="mt-12 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-8 sm:p-12">
+        <div className="card-elevated mt-12 bg-[var(--surface)] p-8 sm:p-12">
           <AnimatePresence mode="wait">
             <motion.blockquote
               key={current.id}

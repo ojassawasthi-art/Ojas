@@ -11,7 +11,7 @@ export function ProjectCard({project}: ProjectCardProps) {
   const {navigate} = useRouter();
 
   return (
-    <article className="group flex flex-col justify-between overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--bg)] transition-colors duration-200 hover:border-[var(--accent)]/60">
+    <article className="card-elevated group flex flex-col justify-between overflow-hidden bg-[var(--surface)]">
       <a
         href={`/work/${project.slug}`}
         data-cursor="view"
@@ -27,7 +27,6 @@ export function ProjectCard({project}: ProjectCardProps) {
         />
 
         <div className="p-7 pb-4">
-          {/* Unboxed metadata row with typographic separators */}
           <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--muted)]">
             <span>{project.category}</span>
             <span aria-hidden="true">·</span>
@@ -35,9 +34,7 @@ export function ProjectCard({project}: ProjectCardProps) {
             {project.status_tag && (
               <>
                 <span aria-hidden="true">·</span>
-                <span className="font-medium text-[var(--accent-text)]">
-                  {project.status_tag}
-                </span>
+                <span className="tag-pill">{project.status_tag}</span>
               </>
             )}
           </div>
@@ -51,9 +48,13 @@ export function ProjectCard({project}: ProjectCardProps) {
           </p>
 
           {project.tech_stack && project.tech_stack.length > 0 && (
-            <p className="mt-4 text-xs text-[var(--muted)]">
-              {project.tech_stack.join(' · ')}
-            </p>
+            <div className="mt-4 flex flex-wrap gap-1.5">
+              {project.tech_stack.map((tech) => (
+                <span key={tech} className="tag-pill">
+                  {tech}
+                </span>
+              ))}
+            </div>
           )}
         </div>
       </a>
@@ -70,7 +71,7 @@ export function ProjectCard({project}: ProjectCardProps) {
           <span>View case study</span>
           <ArrowUpRight
             aria-hidden="true"
-            className="h-3.5 w-3.5 transition-transform duration-200 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5"
+            className="h-3.5 w-3.5 transition-all duration-200 group-hover/link:text-[var(--accent-text)] motion-safe:group-hover/link:translate-x-0.5 motion-safe:group-hover/link:-translate-y-0.5"
           />
         </a>
 
@@ -84,7 +85,7 @@ export function ProjectCard({project}: ProjectCardProps) {
             <span>Visit live site</span>
             <ArrowUpRight
               aria-hidden="true"
-              className="h-3.5 w-3.5 transition-transform duration-200 group-hover/ext:translate-x-0.5 group-hover/ext:-translate-y-0.5"
+              className="h-3.5 w-3.5 motion-safe:transition-transform motion-safe:duration-200 motion-safe:group-hover/ext:translate-x-0.5 motion-safe:group-hover/ext:-translate-y-0.5"
             />
           </a>
         )}

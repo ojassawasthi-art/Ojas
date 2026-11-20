@@ -60,7 +60,7 @@ export function LinksPage() {
                   href={s.url}
                   target={isHttp ? '_blank' : undefined}
                   rel={isHttp ? 'noopener noreferrer' : undefined}
-                  className="group flex items-center justify-between rounded-2xl border border-[var(--border)] bg-[var(--bg)] px-6 py-4 transition-colors hover:border-[var(--accent)]"
+                  className="card-elevated group flex items-center justify-between bg-[var(--surface)] px-6 py-4"
                 >
                   <div>
                     <p className="font-medium text-[var(--text)]">{s.name}</p>
@@ -68,7 +68,7 @@ export function LinksPage() {
                   </div>
                   <ArrowUpRight
                     aria-hidden="true"
-                    className="h-4 w-4 text-[var(--muted)] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[var(--text)]"
+                    className="h-4 w-4 text-[var(--muted)] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[var(--accent-text)]"
                   />
                 </a>
               );
@@ -87,7 +87,7 @@ export function LinksPage() {
                   href={primaryUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group flex items-center justify-between rounded-2xl border border-[var(--border)] bg-[var(--bg)] px-6 py-4 transition-colors hover:border-[var(--accent)]"
+                  className="card-elevated group flex items-center justify-between bg-[var(--surface)] px-6 py-4"
                 >
                   <div>
                     <p className="font-medium text-[var(--text)]">{book.title}</p>
@@ -95,7 +95,7 @@ export function LinksPage() {
                   </div>
                   <ArrowUpRight
                     aria-hidden="true"
-                    className="h-4 w-4 text-[var(--muted)] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[var(--text)]"
+                    className="h-4 w-4 text-[var(--muted)] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[var(--accent-text)]"
                   />
                 </a>
               );
@@ -114,7 +114,7 @@ export function LinksPage() {
                   href={cert.verifyUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group flex items-center justify-between rounded-2xl border border-[var(--border)] bg-[var(--bg)] px-6 py-4 transition-colors hover:border-[var(--accent)]"
+                  className="card-elevated group flex items-center justify-between bg-[var(--surface)] px-6 py-4"
                 >
                   <div>
                     <p className="font-medium text-[var(--text)]">{cert.title}</p>
@@ -124,7 +124,7 @@ export function LinksPage() {
                   </div>
                   <ArrowUpRight
                     aria-hidden="true"
-                    className="h-4 w-4 text-[var(--muted)] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[var(--text)]"
+                    className="h-4 w-4 text-[var(--muted)] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[var(--accent-text)]"
                   />
                 </a>
               ))}
@@ -143,7 +143,7 @@ export function LinksPage() {
                     e.preventDefault();
                     navigate(item.path);
                   }}
-                  className="group rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-5 py-3.5 transition-colors hover:border-[var(--accent)]"
+                  className="card-elevated group bg-[var(--surface)] px-5 py-3.5"
                 >
                   <p className="text-sm font-medium text-[var(--text)] group-hover:text-[var(--accent-text)]">
                     {item.label}

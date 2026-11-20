@@ -4,8 +4,8 @@
   "description": "Personal portfolio of Ojas Awasthi, a web developer, digital marketer, and published author in Lucknow.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#FAFAF8",
-  "theme_color": "#0A0A0A",
+  "background_color": "#FFF4F1",
+  "theme_color": "#FF4D6D",
   "lang": "en-IN",
   "icons": [
     {

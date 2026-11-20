@@ -47,7 +47,7 @@ export function BooksPage() {
               return (
                 <article
                   key={book.id}
-                  className="grid grid-cols-1 items-center gap-10 rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-8 sm:p-12 md:grid-cols-12"
+                  className="card-elevated grid grid-cols-1 items-center gap-10 bg-[var(--surface)] p-8 sm:p-12 md:grid-cols-12"
                 >
                   <div className="flex justify-center md:col-span-4">
                     <BookCover
@@ -93,7 +93,7 @@ export function BooksPage() {
                           href={link.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="group inline-flex items-center gap-2 rounded-xl border border-[var(--border)] px-5 py-2.5 text-xs font-medium text-[var(--text)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent-text)]"
+                          className="btn-secondary group inline-flex items-center gap-2 px-5 py-2.5 text-xs font-medium"
                         >
                           <span>{link.label}</span>
                           <ArrowUpRight
@@ -110,7 +110,7 @@ export function BooksPage() {
           </div>
 
           {/* About the Author */}
-          <div className="mt-16 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-8 sm:p-10">
+          <div className="card-elevated mt-16 bg-[var(--surface)] p-8 sm:p-10">
             <h2 className="font-serif-display text-3xl text-[var(--text)]">
               About the author
             </h2>

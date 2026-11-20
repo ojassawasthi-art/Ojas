@@ -69,7 +69,7 @@ export function WorkPage({projects, loading}: WorkPageProps) {
             <div
               role="tablist"
               aria-label="Filter projects"
-              className="inline-flex w-fit items-center gap-1 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-1"
+              className="inline-flex w-fit items-center gap-1 rounded-full border border-[var(--border)] bg-[var(--surface)] p-1"
             >
               {categories.map((cat) => {
                 const active = activeCategory === cat;
@@ -80,10 +80,10 @@ export function WorkPage({projects, loading}: WorkPageProps) {
                     role="tab"
                     aria-selected={active}
                     onClick={() => setActiveCategory(cat)}
-                    className={`rounded-lg px-3.5 py-1.5 text-xs font-medium whitespace-nowrap shrink-0 transition-colors ${
+                    className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-medium whitespace-nowrap transition-colors ${
                       active
-                        ? 'bg-[var(--bg)] text-[var(--text)] shadow-xs'
-                        : 'text-[var(--muted)] hover:text-[var(--text)]'
+                        ? 'bg-[var(--accent-button)] text-[var(--accent-contrast)] shadow-xs'
+                        : 'text-[var(--muted)] hover:text-[var(--accent-text)]'
                     }`}
                   >
                     {cat}
@@ -98,7 +98,7 @@ export function WorkPage({projects, loading}: WorkPageProps) {
               {[1, 2].map((n) => (
                 <div
                   key={n}
-                  className="h-[420px] animate-pulse rounded-2xl border border-[var(--border)] bg-[var(--surface)]"
+                  className="h-[420px] animate-pulse rounded-[22px] border border-[var(--border)] bg-[var(--surface)]"
                 />
               ))}
             </div>

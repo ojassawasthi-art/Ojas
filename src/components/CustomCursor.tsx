@@ -72,14 +72,14 @@ export function CustomCursor() {
         aria-hidden="true"
         className={`pointer-events-none fixed top-0 left-0 z-50 flex items-center justify-center rounded-full border transition-[width,height,margin,background-color,border-color] duration-200 ease-out ${
           cursorMode === 'view'
-            ? '-mt-8 -ml-8 h-16 w-16 border-[var(--accent)] bg-[#0A0A0A]/90 text-[#F5F5F2] dark:bg-[#FAFAF8]/95 dark:text-[#0A0A0A]'
+            ? '-mt-8 -ml-8 h-16 w-16 border-[var(--accent)] bg-[var(--pop)] text-[var(--pop-contrast)] shadow-md'
             : cursorMode === 'pointer'
-              ? '-mt-6 -ml-6 h-12 w-12 border-[var(--accent)] bg-[var(--accent)]/10'
-              : '-mt-4 -ml-4 h-8 w-8 border-[var(--muted)]/50'
+              ? '-mt-6 -ml-6 h-12 w-12 border-[var(--accent)] bg-[var(--pop)]/45'
+              : '-mt-4 -ml-4 h-8 w-8 border-[var(--accent)]/80'
         }`}
       >
         {cursorMode === 'view' && (
-          <span className="text-[11px] font-medium tracking-wider">View</span>
+          <span className="text-[11px] font-semibold tracking-wider">View</span>
         )}
       </div>
     </>

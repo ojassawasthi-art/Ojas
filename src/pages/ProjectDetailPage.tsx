@@ -57,7 +57,7 @@ export function ProjectDetailPage({
             <button
               type="button"
               onClick={() => navigate('/work')}
-              className="mt-8 rounded-xl border border-[var(--border)] px-5 py-2.5 text-sm font-medium text-[var(--text)]"
+              className="btn-secondary mt-8 px-6 py-2.5 text-sm font-medium"
             >
               Return to Work
             </button>
@@ -99,9 +99,12 @@ export function ProjectDetailPage({
               e.preventDefault();
               navigate('/work');
             }}
-            className="inline-flex items-center gap-2 text-xs font-medium text-[var(--muted)] transition-colors hover:text-[var(--text)]"
+            className="group inline-flex items-center gap-2 text-xs font-medium text-[var(--muted)] transition-colors hover:text-[var(--accent-text)]"
           >
-            <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
+            <ArrowLeft
+              className="h-3.5 w-3.5 transition-colors group-hover:text-[var(--accent-text)]"
+              aria-hidden="true"
+            />
             <span>Back to all work</span>
           </a>
 
@@ -111,12 +114,7 @@ export function ProjectDetailPage({
               <span aria-hidden="true">·</span>
               <span className="font-mono-tabular">{project.year}</span>
               {project.status_tag && (
-                <>
-                  <span aria-hidden="true">·</span>
-                  <span className="font-medium text-[var(--accent-text)]">
-                    {project.status_tag}
-                  </span>
-                </>
+                <span className="tag-pill">{project.status_tag}</span>
               )}
             </div>
 
@@ -135,7 +133,7 @@ export function ProjectDetailPage({
                     href={project.live_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group inline-flex items-center gap-2 rounded-xl bg-[#0A0A0A] px-5 py-3 text-sm font-medium text-[#FAFAF8] transition-opacity hover:opacity-90 dark:bg-[#F5F5F2] dark:text-[#0A0A0A]"
+                    className="btn-primary group inline-flex items-center gap-2 px-6 py-3 text-sm font-medium"
                   >
                     <span>Visit live site</span>
                     <ArrowUpRight
@@ -150,7 +148,7 @@ export function ProjectDetailPage({
                     href={project.github_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group inline-flex items-center gap-2 rounded-xl border border-[var(--border)] px-5 py-3 text-sm font-medium text-[var(--text)] transition-colors hover:border-[var(--accent)]"
+                    className="btn-secondary group inline-flex items-center gap-2 px-6 py-3 text-sm font-medium"
                   >
                     <span>Source repository</span>
                     <ArrowUpRight
@@ -181,7 +179,7 @@ export function ProjectDetailPage({
 
               {(project.role ||
                 (project.tech_stack && project.tech_stack.length > 0)) && (
-                <aside className="space-y-6 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-7 lg:col-span-4">
+                <aside className="card-elevated space-y-6 bg-[var(--surface)] p-7 lg:col-span-4">
                   {project.role && (
                     <div>
                       <p className="text-xs text-[var(--muted)]">Role</p>
@@ -201,9 +199,13 @@ export function ProjectDetailPage({
                       <p className="text-xs text-[var(--muted)]">
                         Stack &amp; Focus
                       </p>
-                      <p className="mt-1 text-sm leading-relaxed text-[var(--text)]">
-                        {project.tech_stack.join(' · ')}
-                      </p>
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {project.tech_stack.map((item) => (
+                          <span key={item} className="tag-pill">
+                            {item}
+                          </span>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </aside>
@@ -213,11 +215,11 @@ export function ProjectDetailPage({
 
           {/* Browser-window mockup showcase */}
           <div className="mt-14 space-y-8">
-            <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-sm">
+            <div className="card-elevated overflow-hidden bg-[var(--surface)] shadow-sm">
               <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
                 <div className="flex items-center gap-1.5" aria-hidden="true">
-                  <span className="h-2.5 w-2.5 rounded-full bg-[var(--border)]" />
-                  <span className="h-2.5 w-2.5 rounded-full bg-[var(--border)]" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-[var(--accent)]/60" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-[var(--pop)]" />
                   <span className="h-2.5 w-2.5 rounded-full bg-[var(--border)]" />
                 </div>
                 <span className="font-mono-tabular text-[11px] text-[var(--muted)]">
@@ -237,7 +239,7 @@ export function ProjectDetailPage({
                 {galleryImages.slice(1).map((imgUrl, idx) => (
                   <div
                     key={`${imgUrl}-${idx}`}
-                    className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)]"
+                    className="card-elevated overflow-hidden bg-[var(--surface)]"
                   >
                     <img
                       src={imgUrl}
@@ -271,7 +273,7 @@ export function ProjectDetailPage({
                 </span>
                 <ArrowRight
                   aria-hidden="true"
-                  className="h-6 w-6 text-[var(--text)] transition-transform duration-200 group-hover:translate-x-1"
+                  className="h-6 w-6 text-[var(--text)] transition-all duration-200 group-hover:translate-x-1 group-hover:text-[var(--accent-text)]"
                 />
               </a>
             </div>

@@ -23,9 +23,13 @@ export function ChatLauncher() {
           aria-label="Ask about Ojas"
           aria-expanded={isOpen}
           aria-controls="ojas-chat-panel"
-          className="fixed right-[max(1rem,env(safe-area-inset-right))] bottom-[max(1rem,env(safe-area-inset-bottom))] z-[45] inline-flex h-11 items-center gap-2.5 rounded-xl border border-[var(--border)] bg-[#0A0A0A] px-4 text-xs font-medium whitespace-nowrap text-[#FAFAF8] shadow-[0_10px_30px_rgba(10,10,10,0.18)] transition-colors hover:border-[#C8A97E] sm:right-6 sm:bottom-6 dark:bg-[#F5F5F2] dark:text-[#0A0A0A] dark:shadow-[0_12px_32px_rgba(0,0,0,0.45)]"
+          className="btn-primary fixed right-[max(1rem,env(safe-area-inset-right))] bottom-[max(1rem,env(safe-area-inset-bottom))] z-[45] inline-flex h-11 items-center gap-2.5 px-5 text-xs font-medium whitespace-nowrap shadow-[0_12px_28px_-6px_var(--accent-glow)] sm:right-6 sm:bottom-6"
         >
-          <MessageSquare className="h-4 w-4 text-[#C8A97E]" aria-hidden="true" />
+          <span className="relative flex h-2 w-2" aria-hidden="true">
+            <span className="absolute inline-flex h-full w-full rounded-full bg-[var(--pop)] opacity-75 motion-safe:animate-ping" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--pop)]" />
+          </span>
+          <MessageSquare className="h-4 w-4" aria-hidden="true" />
           <span>Ask about Ojas</span>
         </button>
       )}
@@ -36,9 +40,9 @@ export function ChatLauncher() {
             isOpen ? (
               <div
                 aria-label="Loading chat assistant"
-                className="fixed right-[max(1rem,env(safe-area-inset-right))] bottom-[max(1rem,env(safe-area-inset-bottom))] z-[45] inline-flex h-11 items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 text-xs font-medium text-[var(--text)] shadow-lg sm:right-6 sm:bottom-6"
+                className="fixed right-[max(1rem,env(safe-area-inset-right))] bottom-[max(1rem,env(safe-area-inset-bottom))] z-[45] inline-flex h-11 items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--surface)] px-5 text-xs font-medium text-[var(--text)] shadow-lg sm:right-6 sm:bottom-6"
               >
-                <Loader2 className="h-3.5 w-3.5 animate-spin text-[#C8A97E]" />
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-[var(--accent)]" />
                 <span>Opening assistant...</span>
               </div>
             ) : null

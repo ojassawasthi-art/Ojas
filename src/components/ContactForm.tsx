@@ -88,7 +88,7 @@ export function ContactForm() {
         initial={{opacity: 0, y: 12}}
         animate={{opacity: 1, y: 0}}
         transition={{duration: 0.35, ease: [0.16, 1, 0.3, 1]}}
-        className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-8"
+        className="card-elevated bg-[var(--surface)] p-8"
       >
         <div className="flex items-start gap-4">
           <CheckCircle2
@@ -106,13 +106,13 @@ export function ContactForm() {
               <button
                 type="button"
                 onClick={() => setSubmitState('idle')}
-                className="rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-2 text-xs font-medium text-[var(--text)] transition-colors hover:border-[var(--accent)]"
+                className="btn-secondary px-4 py-2 text-xs font-medium"
               >
                 Send another message
               </button>
               <a
                 href={`mailto:${siteContent.contact.email}`}
-                className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--accent-text)] underline underline-offset-4"
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--accent-text)] underline decoration-[var(--accent)] underline-offset-4"
               >
                 <Mail className="h-3.5 w-3.5" aria-hidden="true" />
                 {siteContent.contact.email}
@@ -237,7 +237,7 @@ export function ContactForm() {
         <MagneticButton
           type="submit"
           disabled={isSubmitting}
-          className="rounded-xl bg-[#0A0A0A] px-6 py-3 text-sm font-medium text-[#FAFAF8] transition-opacity hover:opacity-90 disabled:opacity-60 dark:bg-[#F5F5F2] dark:text-[#0A0A0A]"
+          className="btn-primary px-6 py-3 text-sm font-medium disabled:opacity-60"
         >
           {isSubmitting ? (
             <>
@@ -256,7 +256,7 @@ export function ContactForm() {
           Or email directly at{' '}
           <a
             href={`mailto:${siteContent.contact.email}`}
-            className="text-[var(--text)] underline underline-offset-4"
+            className="text-[var(--accent-text)] underline decoration-[var(--accent)] underline-offset-4"
           >
             {siteContent.contact.email}
           </a>

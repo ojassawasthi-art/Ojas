@@ -40,7 +40,7 @@ export function ServicesPage() {
             {siteContent.services.map((service) => (
               <article
                 key={service.index}
-                className="flex flex-col justify-between rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-8 transition-colors hover:border-[var(--accent)]/60"
+                className="card-elevated flex flex-col justify-between bg-[var(--surface)] p-8"
               >
                 <div>
                   <span className="font-mono-tabular text-xs text-[var(--accent-text)]">
@@ -57,7 +57,7 @@ export function ServicesPage() {
             ))}
           </div>
 
-          <div className="mt-14 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-8 sm:p-10">
+          <div className="card-elevated mt-14 bg-[var(--surface)] p-8 sm:p-10">
             <h2 className="font-serif-display text-3xl tracking-tight text-[var(--text)]">
               Technical stack &amp; approach
             </h2>
@@ -67,14 +67,14 @@ export function ServicesPage() {
               metadata, and clear user paths learned from operating The Vaxn
               Store across SEO, hosting, and promotions.
             </p>
-            <div className="mt-7 flex flex-wrap gap-6">
+            <div className="mt-7 flex flex-wrap gap-4">
               <a
                 href="/work"
                 onClick={(e) => {
                   e.preventDefault();
                   navigate('/work');
                 }}
-                className="inline-flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--bg)] px-5 py-3 text-sm font-medium text-[var(--text)] transition-colors hover:border-[var(--accent)]"
+                className="btn-secondary group inline-flex items-center gap-2 px-6 py-3 text-sm font-medium"
               >
                 <span>View selected work</span>
                 <AnimatedArrow />
@@ -85,7 +85,7 @@ export function ServicesPage() {
                   e.preventDefault();
                   navigate('/contact');
                 }}
-                className="inline-flex items-center gap-2 rounded-xl bg-[#0A0A0A] px-5 py-3 text-sm font-medium text-[#FAFAF8] transition-opacity hover:opacity-90 dark:bg-[#F5F5F2] dark:text-[#0A0A0A]"
+                className="btn-primary group inline-flex items-center gap-2 px-6 py-3 text-sm font-medium"
               >
                 <span>Start a conversation</span>
                 <AnimatedArrow />
