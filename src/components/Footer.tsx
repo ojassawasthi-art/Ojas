@@ -1,5 +1,6 @@
 import {ArrowUp, ArrowUpRight} from 'lucide-react';
 import {useEffect, useState} from 'react';
+import {LOCAL_SEO_PAGES} from '../content/localSeoPages';
 import {siteContent} from '../content/site';
 import {useRouter} from '../context/RouterContext';
 import {getNewsletterUrl} from '../lib/newsletter';
@@ -141,7 +142,29 @@ export function Footer() {
           )}
         </div>
 
-        <div className="mt-14 flex flex-col items-start justify-between gap-4 border-t border-[var(--border)] pt-6 text-xs text-[var(--muted)] sm:flex-row sm:items-center">
+        <div className="mt-10 border-t border-[var(--border)] pt-6">
+          <p className="text-xs font-medium text-[var(--text)]">
+            Services in Lucknow &amp; Gonda
+          </p>
+          <ul className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-xs text-[var(--muted)]">
+            {LOCAL_SEO_PAGES.map((page) => (
+              <li key={page.path}>
+                <a
+                  href={page.path}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate(page.path);
+                  }}
+                  className="transition-colors hover:text-[var(--text)]"
+                >
+                  {page.navLabel}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="mt-8 flex flex-col items-start justify-between gap-4 border-t border-[var(--border)] pt-6 text-xs text-[var(--muted)] sm:flex-row sm:items-center">
           <div className="flex flex-wrap items-center gap-3">
             <span>© 2026 {siteContent.profile.name}</span>
             <span aria-hidden="true">·</span>

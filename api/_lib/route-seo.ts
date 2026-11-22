@@ -471,6 +471,126 @@ export function buildPageSeoData(
     };
   }
 
+  const localSeoMeta: Record<
+    string,
+    {
+      label: string;
+      title: string;
+      description: string;
+      h1: string;
+      serviceName: string;
+      serviceTypes: string[];
+      areaServed: string[];
+    }
+  > = {
+    '/web-developer-lucknow': {
+      label: 'Web Developer Lucknow',
+      title: 'Web Developer in Lucknow | Ojas Awasthi',
+      description:
+        'Freelance web developer in Lucknow, Uttar Pradesh. Ojas Awasthi designs and builds fast React, Next.js, Tailwind CSS, and Supabase websites for businesses.',
+      h1: 'Freelance Web Developer in Lucknow',
+      serviceName: 'Ojas Awasthi — Web Development in Lucknow',
+      serviceTypes: [
+        'Web Design & Development',
+        'Frontend Development',
+        'E-Commerce Storefront Setup',
+        'Supabase Web Applications',
+      ],
+      areaServed: ['Lucknow', 'Gonda'],
+    },
+    '/website-developer-gonda': {
+      label: 'Website Developer Gonda',
+      title: 'Website Developer for Gonda (Remote) | Ojas Awasthi',
+      description:
+        'Freelance website developer serving Gonda businesses remotely from Lucknow. Ojas Awasthi builds fast, mobile-ready React and Supabase websites with clear SEO.',
+      h1: 'Website Developer for Gonda Businesses (Remote From Lucknow)',
+      serviceName: 'Ojas Awasthi — Remote Website Development for Gonda',
+      serviceTypes: [
+        'Remote Website Development',
+        'Small Business Websites',
+        'Mobile-Friendly Web Design',
+        'E-Commerce Storefront Setup',
+      ],
+      areaServed: ['Gonda', 'Lucknow'],
+    },
+    '/seo-lucknow-gonda': {
+      label: 'SEO Lucknow & Gonda',
+      title: 'SEO Services in Lucknow & Gonda | Ojas Awasthi',
+      description:
+        'Technical and local SEO for Lucknow and Gonda websites by Ojas Awasthi: clean HTML, pre-rendered metadata, structured data, sitemaps, and search visibility.',
+      h1: 'Technical & Local SEO for Lucknow and Gonda Websites',
+      serviceName: 'Ojas Awasthi — Technical & Local SEO for Lucknow and Gonda',
+      serviceTypes: [
+        'Technical SEO',
+        'Local Search Engine Optimization',
+        'Schema.org Structured Data',
+        'Pre-Rendering & Crawlability Optimization',
+      ],
+      areaServed: ['Lucknow', 'Gonda'],
+    },
+    '/digital-marketing-lucknow-gonda': {
+      label: 'Digital Marketing Lucknow & Gonda',
+      title: 'Digital Marketing in Lucknow & Gonda | Ojas Awasthi',
+      description:
+        'HubSpot-certified digital marketing for Lucknow and Gonda brands by Ojas Awasthi: inbound strategy, content structure, analytics, and practical promotions.',
+      h1: 'Digital Marketing for Lucknow and Gonda Brands',
+      serviceName: 'Ojas Awasthi — Digital Marketing in Lucknow and Gonda',
+      serviceTypes: [
+        'Digital Marketing',
+        'Inbound Marketing Strategy',
+        'Content & Landing Page Optimization',
+        'Analytics & Search Positioning',
+      ],
+      areaServed: ['Lucknow', 'Gonda'],
+    },
+  };
+
+  if (localSeoMeta[route]) {
+    const meta = localSeoMeta[route];
+    const pageUrl = `${cleanUrl}${route}`;
+    return {
+      statusCode: 200,
+      title: meta.title,
+      description: meta.description,
+      canonical: pageUrl,
+      ogImage: defaultOgImage,
+      noIndex: false,
+      schemas: [
+        {
+          '@context': 'https://schema.org',
+          '@type': 'ProfessionalService',
+          name: meta.serviceName,
+          url: pageUrl,
+          serviceType: meta.serviceTypes,
+          areaServed: meta.areaServed.map((city) => ({
+            '@type': 'City',
+            name: city,
+          })),
+          provider: {
+            '@type': 'Person',
+            name: siteData.profile.name,
+            url: cleanUrl,
+            email: `mailto:${siteData.contact.email}`,
+          },
+        },
+        getBreadcrumbSchema(
+          [
+            {name: 'Home', path: '/'},
+            {name: 'Services', path: '/services'},
+            {name: meta.label, path: route},
+          ],
+          cleanUrl,
+        ),
+      ],
+      bodyHtml: renderShell(`
+        <nav aria-label="Breadcrumb"><a href="/">Home</a> / <a href="/services">Services</a> / <span>${escapeHtml(meta.label)}</span></nav>
+        <h1>${escapeHtml(meta.h1)}</h1>
+        <p>${escapeHtml(meta.description)}</p>
+        <p><a href="/contact">Contact ${escapeHtml(siteData.profile.name)}</a></p>
+      `),
+    };
+  }
+
   return {
     statusCode: 404,
     title: `Page Not Found | ${siteData.profile.name}`,

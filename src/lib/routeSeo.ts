@@ -1,3 +1,4 @@
+import {getLocalSeoPage, LOCAL_SEO_PAGES} from '../content/localSeoPages';
 import {siteContent} from '../content/site';
 import type {Project} from '../types/database';
 
@@ -453,7 +454,143 @@ export function buildPageSeoData(
         <h1>Web Development &amp; Digital Marketing Services in Lucknow</h1>
         <p>Freelance website builds, technical search optimization, inbound digital marketing, and lean e-commerce setups by Ojas Awasthi in Lucknow, Uttar Pradesh.</p>
         <ul>${siteContent.services.map((s) => `<li><strong>${escapeHtml(s.title)}</strong>: ${escapeHtml(s.description)}</li>`).join('')}</ul>
+        <section>
+          <h2>Local Service Guides (Lucknow &amp; Gonda)</h2>
+          <ul>${LOCAL_SEO_PAGES.map((p) => `<li><a href="${escapeHtml(p.path)}">${escapeHtml(p.h1)}</a> — ${escapeHtml(p.description)}</li>`).join('')}</ul>
+        </section>
         <p><a href="/work">View selected web projects</a> · <a href="/contact">Get in touch</a></p>
+      `),
+    };
+  }
+
+  // 4b. LOCAL SEO PAGES (/web-developer-lucknow, /website-developer-gonda, /seo-lucknow-gonda, /digital-marketing-lucknow-gonda)
+  const localSeoPage = getLocalSeoPage(route);
+  if (localSeoPage) {
+    const pageUrl = `${cleanUrl}${localSeoPage.path}`;
+    const siblingPages = LOCAL_SEO_PAGES.filter((p) => p.path !== localSeoPage.path);
+    const featuredWork = publishedProjects.slice(0, 4);
+
+    return {
+      statusCode: 200,
+      title: localSeoPage.title,
+      description: localSeoPage.description,
+      canonical: pageUrl,
+      ogImage: defaultOgImage,
+      noIndex: false,
+      schemas: [
+        {
+          '@context': 'https://schema.org',
+          '@type': 'ProfessionalService',
+          name: localSeoPage.serviceName,
+          url: pageUrl,
+          serviceType: localSeoPage.serviceTypes,
+          areaServed: localSeoPage.areaServed.map((city) => ({
+            '@type': 'City',
+            name: city,
+          })),
+          provider: {
+            '@type': 'Person',
+            name: siteContent.profile.name,
+            url: cleanUrl,
+            email: `mailto:${siteContent.contact.email}`,
+          },
+        },
+        {
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: localSeoPage.faqs.map((faq) => ({
+            '@type': 'Question',
+            name: faq.question,
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: faq.answer,
+            },
+          })),
+        },
+        getBreadcrumbSchema(
+          [
+            {name: 'Home', path: '/'},
+            {name: 'Services', path: '/services'},
+            {name: localSeoPage.navLabel, path: localSeoPage.path},
+          ],
+          cleanUrl,
+        ),
+      ],
+      bodyHtml: renderShell(`
+        <nav aria-label="Breadcrumb"><a href="/">Home</a> / <a href="/services">Services</a> / <span>${escapeHtml(localSeoPage.navLabel)}</span></nav>
+        <article>
+          <h1>${escapeHtml(localSeoPage.h1)}</h1>
+          ${localSeoPage.introParagraphs.map((p) => `<p>${escapeHtml(p)}</p>`).join('')}
+          <figure>
+            <img src="${escapeHtml(siteContent.profile.photoPath)}" alt="${escapeHtml(localSeoPage.portraitAlt)}" width="480" height="600" />
+            <figcaption>${escapeHtml(localSeoPage.portraitCaption)}</figcaption>
+          </figure>
+          <section>
+            <h2>${escapeHtml(localSeoPage.whatIDoHeading)}</h2>
+            <p>${escapeHtml(localSeoPage.whatIDoIntro)}</p>
+            <ul>
+              ${localSeoPage.deliverables
+                .map(
+                  (d) =>
+                    `<li><strong>${escapeHtml(d.title)}</strong>: ${escapeHtml(d.description)}</li>`,
+                )
+                .join('')}
+            </ul>
+            <h3>${escapeHtml(localSeoPage.contextHeading)}</h3>
+            ${localSeoPage.contextParagraphs.map((p) => `<p>${escapeHtml(p)}</p>`).join('')}
+          </section>
+          <section>
+            <h2>${escapeHtml(localSeoPage.processHeading)}</h2>
+            <p>${escapeHtml(localSeoPage.processIntro)}</p>
+            <ol>
+              ${localSeoPage.process
+                .map(
+                  (s) =>
+                    `<li><strong>${escapeHtml(s.title)}</strong>: ${escapeHtml(s.description)}</li>`,
+                )
+                .join('')}
+            </ol>
+          </section>
+          <section>
+            <h2>${escapeHtml(localSeoPage.projectsHeading)}</h2>
+            <p>${escapeHtml(localSeoPage.projectsIntro)}</p>
+            <ul>
+              ${featuredWork
+                .map(
+                  (p) =>
+                    `<li><a href="/work/${escapeHtml(p.slug)}">${escapeHtml(p.title)}</a> (${escapeHtml(p.category)}, ${escapeHtml(p.year)}) — ${escapeHtml(p.description)}</li>`,
+                )
+                .join('')}
+            </ul>
+          </section>
+          <section>
+            <h2>Frequently Asked Questions</h2>
+            <dl>
+              ${localSeoPage.faqs
+                .map(
+                  (f) =>
+                    `<dt>${escapeHtml(f.question)}</dt><dd>${escapeHtml(f.answer)}</dd>`,
+                )
+                .join('')}
+            </dl>
+          </section>
+          <section>
+            <h2>${escapeHtml(localSeoPage.ctaHeading)}</h2>
+            <p>${escapeHtml(localSeoPage.ctaCopy)} <a href="/contact">Contact Ojas Awasthi</a>.</p>
+          </section>
+          <section>
+            <h2>Related Services</h2>
+            <ul>
+              ${siblingPages
+                .map(
+                  (s) =>
+                    `<li><a href="${escapeHtml(s.path)}">${escapeHtml(s.h1)}</a></li>`,
+                )
+                .join('')}
+              <li><a href="/services">All Services</a></li>
+            </ul>
+          </section>
+        </article>
       `),
     };
   }

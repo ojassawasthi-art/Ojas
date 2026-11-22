@@ -2,6 +2,7 @@ import 'dotenv/config';
 import {createClient} from '@supabase/supabase-js';
 import fs from 'node:fs';
 import path from 'node:path';
+import {LOCAL_SEO_PAGES} from '../src/content/localSeoPages';
 import {siteContent} from '../src/content/site';
 import {buildPageSeoData, injectSeoIntoHtml} from '../src/lib/routeSeo';
 import type {Project} from '../src/types/database';
@@ -81,6 +82,10 @@ async function run() {
     {route: '/education', outFile: path.join(distDir, 'education', 'index.html')},
     {route: '/books', outFile: path.join(distDir, 'books', 'index.html')},
     {route: '/services', outFile: path.join(distDir, 'services', 'index.html')},
+    ...LOCAL_SEO_PAGES.map((page) => ({
+      route: page.path,
+      outFile: path.join(distDir, page.path.replace(/^\//, ''), 'index.html'),
+    })),
     {route: '/work', outFile: path.join(distDir, 'work', 'index.html')},
     {route: '/blog', outFile: path.join(distDir, 'blog', 'index.html')},
     ...siteContent.blogPosts.map((post) => ({

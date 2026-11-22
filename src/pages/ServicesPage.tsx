@@ -1,5 +1,6 @@
 import {AnimatedArrow} from '../components/MagneticButton';
 import {SeoHead} from '../components/SeoHead';
+import {LOCAL_SEO_PAGES} from '../content/localSeoPages';
 import {siteContent} from '../content/site';
 import {useRouter} from '../context/RouterContext';
 import {buildPageSeoData} from '../lib/routeSeo';
@@ -92,6 +93,58 @@ export function ServicesPage() {
               </a>
             </div>
           </div>
+
+          <section
+            aria-labelledby="local-services-heading"
+            className="mt-16 border-t border-[var(--border)] pt-14"
+          >
+            <div className="max-w-2xl">
+              <p className="text-xs tracking-widest text-[var(--accent-text)]">
+                Lucknow &amp; Gonda
+              </p>
+              <h2
+                id="local-services-heading"
+                className="mt-2 font-serif-display text-3xl tracking-tight text-[var(--text)] sm:text-4xl"
+              >
+                Local service guides
+              </h2>
+              <p className="mt-3 text-sm leading-relaxed text-[var(--muted)]">
+                Detailed pages covering web development in Lucknow, remote
+                website development for Gonda, technical SEO, and digital
+                marketing across both cities.
+              </p>
+            </div>
+
+            <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2">
+              {LOCAL_SEO_PAGES.map((item) => (
+                <a
+                  key={item.path}
+                  href={item.path}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate(item.path);
+                  }}
+                  className="group flex flex-col justify-between rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 transition-colors hover:border-[var(--accent)]"
+                >
+                  <div>
+                    <p className="text-xs text-[var(--accent-text)]">
+                      {item.eyebrow}
+                    </p>
+                    <h3 className="mt-2 font-serif-display text-2xl tracking-tight text-[var(--text)]">
+                      {item.h1}
+                    </h3>
+                    <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
+                      {item.description}
+                    </p>
+                  </div>
+                  <span className="mt-5 inline-flex items-center gap-1.5 text-xs font-medium text-[var(--text)] transition-colors group-hover:text-[var(--accent-text)]">
+                    <span>Read service details</span>
+                    <AnimatedArrow className="h-3.5 w-3.5" />
+                  </span>
+                </a>
+              ))}
+            </div>
+          </section>
         </div>
       </section>
     </>

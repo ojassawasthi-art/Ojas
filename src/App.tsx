@@ -19,8 +19,10 @@ import {BlogPage} from './pages/BlogPage';
 import {BooksPage} from './pages/BooksPage';
 import {ContactPage} from './pages/ContactPage';
 import {EducationPage} from './pages/EducationPage';
+import {getLocalSeoPage} from './content/localSeoPages';
 import {HomePage} from './pages/HomePage';
 import {LinksPage} from './pages/LinksPage';
+import {LocalSeoPage} from './pages/LocalSeoPage';
 import {NotFoundPage} from './pages/NotFoundPage';
 import {PressKitPage} from './pages/PressKitPage';
 import {PrivacyPage} from './pages/PrivacyPage';
@@ -87,6 +89,16 @@ function AppShell() {
     }
     if (pathname === '/services') {
       return <ServicesPage />;
+    }
+    const localSeoPage = getLocalSeoPage(pathname);
+    if (localSeoPage) {
+      return (
+        <LocalSeoPage
+          page={localSeoPage}
+          projects={projects}
+          loading={loading}
+        />
+      );
     }
     if (pathname === '/books') {
       return <BooksPage />;

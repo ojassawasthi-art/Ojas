@@ -856,6 +856,54 @@ async function startServer() {
       {loc: '/education', lastmod: nowIso, changefreq: 'monthly', priority: '0.8'},
       {loc: '/books', lastmod: nowIso, changefreq: 'monthly', priority: '0.8'},
       {loc: '/services', lastmod: nowIso, changefreq: 'monthly', priority: '0.8'},
+      {
+        loc: '/web-developer-lucknow',
+        lastmod: nowIso,
+        changefreq: 'monthly',
+        priority: '0.8',
+        images: [
+          {
+            loc: `${baseUrl}/images/ojas.jpg`,
+            title: 'Ojas Awasthi, freelance web developer based in Lucknow, Uttar Pradesh',
+          },
+        ],
+      },
+      {
+        loc: '/website-developer-gonda',
+        lastmod: nowIso,
+        changefreq: 'monthly',
+        priority: '0.8',
+        images: [
+          {
+            loc: `${baseUrl}/images/ojas.jpg`,
+            title: 'Ojas Awasthi, website developer serving Gonda remotely from Lucknow',
+          },
+        ],
+      },
+      {
+        loc: '/seo-lucknow-gonda',
+        lastmod: nowIso,
+        changefreq: 'monthly',
+        priority: '0.8',
+        images: [
+          {
+            loc: `${baseUrl}/images/ojas.jpg`,
+            title: 'Ojas Awasthi, technical and local SEO for Lucknow and Gonda websites',
+          },
+        ],
+      },
+      {
+        loc: '/digital-marketing-lucknow-gonda',
+        lastmod: nowIso,
+        changefreq: 'monthly',
+        priority: '0.8',
+        images: [
+          {
+            loc: `${baseUrl}/images/ojas.jpg`,
+            title: 'Ojas Awasthi, HubSpot-certified digital marketer serving Lucknow and Gonda',
+          },
+        ],
+      },
       {loc: '/work', lastmod: nowIso, changefreq: 'weekly', priority: '0.9'},
       {loc: '/blog', lastmod: nowIso, changefreq: 'weekly', priority: '0.8'},
       {loc: '/press-kit', lastmod: nowIso, changefreq: 'monthly', priority: '0.7'},
