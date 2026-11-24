@@ -18,27 +18,7 @@ function escapeHtml(input: string): string {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
-function safeJsonLd(data: unknown): string {
-  return JSON.stringify(data)
-    .replace(/</g, '\\u003c')
-    .replace(/>/g, '\\u003e')
-    .replace(/&/g, '\\u0026')
-    .replace(/\u2028/g, '\\u2028')
-    .replace(/\u2029/g, '\\u2029');
-}
-
-function isSafeHttpUrl(raw: string | null | undefined): boolean {
-  if (!raw) return false;
-  try {
-    const parsed = new URL(raw.trim());
-    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
-  } catch {
-    return false;
-  }
+    .replace(/"/g, '&quot;');
 }
 
 function fitDescription(text: string): string {
@@ -679,10 +659,7 @@ export function buildPageSeoData(
           '@type': 'CreativeWork',
           name: project.title,
           description: project.description,
-          url:
-            project.live_url && isSafeHttpUrl(project.live_url)
-              ? project.live_url
-              : `${cleanUrl}/work/${project.slug}`,
+          url: project.live_url || `${cleanUrl}/work/${project.slug}`,
           author: {
             '@type': 'Person',
             name: siteContent.profile.name,
@@ -706,7 +683,7 @@ export function buildPageSeoData(
         <p>${escapeHtml(project.category)} · ${escapeHtml(project.year)}</p>
         <p>${escapeHtml(project.description)}</p>
         ${project.long_description ? `<p>${escapeHtml(project.long_description)}</p>` : ''}
-        ${project.live_url && isSafeHttpUrl(project.live_url) ? `<p><a href="${escapeHtml(project.live_url)}" rel="noopener noreferrer">Visit live site</a></p>` : ''}
+        ${project.live_url ? `<p><a href="${escapeHtml(project.live_url)}" rel="noopener noreferrer">Visit live site</a></p>` : ''}
       `),
     };
   }
@@ -1001,7 +978,7 @@ export function injectSeoIntoHtml(html: string, seo: RouteSeoPayload): string {
   const jsonLdScripts = seo.schemas
     .map(
       (s) =>
-        `<script type="application/ld+json" data-oa-jsonld="true">${safeJsonLd(s)}</script>`,
+        `<script type="application/ld+json" data-oa-jsonld="true">${JSON.stringify(s)}</script>`,
     )
     .join('\n    ');
 

@@ -1,6 +1,5 @@
 import {ArrowUpRight} from 'lucide-react';
 import {useRouter} from '../context/RouterContext';
-import {isSafeHttpUrl} from '../lib/screenshot';
 import type {Project} from '../types/database';
 import {ProjectThumbnail} from './ProjectThumbnail';
 
@@ -76,7 +75,7 @@ export function ProjectCard({project}: ProjectCardProps) {
           />
         </a>
 
-        {project.live_url && isSafeHttpUrl(project.live_url) && (
+        {project.live_url && (
           <a
             href={project.live_url}
             target="_blank"

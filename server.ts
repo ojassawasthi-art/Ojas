@@ -9,18 +9,6 @@ import {createServer as createViteServer} from 'vite';
 import {z} from 'zod';
 import {handleChatRequest, type ChatLogRecord} from './api/_lib/chat.js';
 import {handleNewsletterSignup, type NewsletterRecord} from './api/_lib/newsletter.js';
-import {
-  checkRateLimit,
-  getClientIp,
-  hashIdentifier,
-  hashIp,
-  isSafeHttpUrl,
-  isSafeImageUrl,
-  isUuid,
-  redactSecrets,
-  sanitizeSingleLine,
-  validateAndDecodeImageUpload,
-} from './api/_lib/vercel.js';
 import {siteContent} from './src/content/site';
 import {buildPageSeoData, injectSeoIntoHtml} from './src/lib/routeSeo';
 import type {
@@ -51,28 +39,18 @@ const isProd = process.env.NODE_ENV === 'production';
 const SUPABASE_URL = (
   process.env.VITE_SUPABASE_URL ||
   process.env.NEXT_PUBLIC_SUPABASE_URL ||
-  process.env.SUPABASE_URL ||
-  ''
+  'https://hdryciyvkhozomertslx.supabase.co'
 )
   .trim()
   .replace(/\/rest\/v1\/?$/i, '')
   .replace(/\/+$/, '');
-const SUPABASE_ANON_KEY = (
+const SUPABASE_ANON_KEY =
   process.env.VITE_SUPABASE_ANON_KEY ||
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-  ''
-).trim();
-const SUPABASE_SERVICE_ROLE_KEY = (
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-).trim();
-const RESEND_API_KEY = (process.env.RESEND_API_KEY || '').trim();
-const ADMIN_EMAIL = (
-  process.env.ADMIN_EMAIL ||
-  process.env.VITE_ADMIN_EMAIL ||
-  'ojassawasthi@gmail.com'
-)
-  .trim()
-  .toLowerCase();
+  'sb_publishable_y2bqryW00-NO-JAnrOXKTw_Qa4pYP1H';
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
+const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || 'ojassawasthi@gmail.com').toLowerCase();
 
 const isSupabaseAdminReady = Boolean(SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY);
 const isSupabasePublicReady = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
@@ -104,8 +82,19 @@ const fallbackStore: {
   settings: structuredClone(siteContent.fallbackSettings),
 };
 
-interface AuthedRequest extends Request {
-  adminUserId?: string;
+// Rate limit map: ip_hash -> timestamps (max 3 per hour)
+const rateLimitMap = new Map<string, number[]>();
+
+function hashIp(ip: string): string {
+  return crypto.createHash('sha256').update(ip || 'unknown').digest('hex').slice(0, 24);
+}
+
+function getClientIp(req: Request): string {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (typeof forwarded === 'string') {
+    return forwarded.split(',')[0].trim();
+  }
+  return req.socket.remoteAddress || 'unknown';
 }
 
 function getBaseUrl(_req: Request): string {
@@ -116,80 +105,30 @@ function getBaseUrl(_req: Request): string {
   return configured.trim().replace(/\/+$/, '');
 }
 
-async function verifyAdmin(
-  req: AuthedRequest,
-  res: Response,
-  next: NextFunction,
-) {
-  res.setHeader('Cache-Control', 'no-store');
-
-  if (!isSupabaseAdminReady || !supabaseAdmin) {
-    res.status(503).json({error: 'Admin service is not configured.'});
+async function verifyAdmin(req: Request, res: Response, next: NextFunction) {
+  if (isSupabaseAdminReady && supabaseAdmin) {
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+    if (!token) {
+      res.status(401).json({error: 'Missing authentication token.'});
+      return;
+    }
+    const {data, error} = await supabaseAdmin.auth.getUser(token);
+    if (error || !data.user?.email || data.user.email.toLowerCase() !== ADMIN_EMAIL) {
+      res.status(403).json({error: 'Admin access restricted.'});
+      return;
+    }
+    next();
     return;
   }
 
-  const ipHash = hashIp(getClientIp(req));
-  const authWindowOk = await checkRateLimit(supabaseAdmin, {
-    routeKey: 'admin-auth-fail',
-    identifierHash: ipHash,
-    maxRequests: 10,
-    windowMs: 15 * 60 * 1000,
-    recordHit: false,
-  });
-  if (!authWindowOk) {
-    res.status(429).json({
-      error: 'Too many authentication attempts. Please try again later.',
-    });
+  // Preview mode fallback when Supabase keys are not yet connected
+  const previewEmail = String(req.headers['x-admin-preview-email'] || '').toLowerCase();
+  if (previewEmail === ADMIN_EMAIL) {
+    next();
     return;
   }
-
-  const authHeader = req.headers.authorization || '';
-  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
-  if (!token) {
-    await checkRateLimit(supabaseAdmin, {
-      routeKey: 'admin-auth-fail',
-      identifierHash: ipHash,
-      maxRequests: 10,
-      windowMs: 15 * 60 * 1000,
-      recordHit: true,
-    });
-    res.status(401).json({error: 'Authentication required.'});
-    return;
-  }
-
-  const {data, error} = await supabaseAdmin.auth.getUser(token);
-  const user = data?.user;
-  const userEmail = user?.email?.toLowerCase() || '';
-  const isConfirmed = Boolean(user?.email_confirmed_at);
-
-  if (error || !user || !userEmail || !isConfirmed || userEmail !== ADMIN_EMAIL) {
-    await checkRateLimit(supabaseAdmin, {
-      routeKey: 'admin-auth-fail',
-      identifierHash: ipHash,
-      maxRequests: 10,
-      windowMs: 15 * 60 * 1000,
-      recordHit: true,
-    });
-    res.status(403).json({error: 'Admin access restricted.'});
-    return;
-  }
-
-  const actorHash = hashIdentifier('admin-actor', `${user.id}:${ipHash}`);
-  const allowed = await checkRateLimit(supabaseAdmin, {
-    routeKey: 'admin-api',
-    identifierHash: actorHash,
-    maxRequests: 60,
-    windowMs: 60 * 1000,
-  });
-  if (!allowed) {
-    res.status(429).json({
-      error: 'Too many requests. Please slow down and try again shortly.',
-    });
-    return;
-  }
-
-  req.adminUserId = user.id;
-  next();
+  res.status(401).json({error: 'Admin sign-in required.'});
 }
 
 async function getPublishedProjects(): Promise<Project[]> {
@@ -237,33 +176,12 @@ async function getSiteSettings(): Promise<SiteSettingsMap> {
   return fallbackStore.settings;
 }
 
-const optionalHttpUrl = z
-  .union([z.string().trim().max(500), z.null(), z.undefined()])
-  .transform((val) => (val ? val : null))
-  .refine((val) => val === null || isSafeHttpUrl(val), {
-    message: 'URL must start with http:// or https://',
-  });
-
-const optionalImageUrl = z
-  .union([z.string().trim().max(500), z.null(), z.undefined()])
-  .transform((val) => (val ? val : null))
-  .refine((val) => val === null || isSafeImageUrl(val), {
-    message: 'Image URL must be a valid http(s) URL or site-relative path.',
-  });
-
-const slugSchema = z
-  .string()
-  .trim()
-  .min(1)
-  .max(120)
-  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Invalid slug format.');
-
 const contactBodySchema = z.object({
   name: z.string().trim().min(2).max(120),
   email: z.string().trim().email().max(254),
   subject: z.string().trim().min(2).max(200),
   message: z.string().trim().min(10).max(5000),
-  website: z.string().max(200).optional(),
+  website: z.string().optional(),
 });
 
 const testimonialSchema = z.object({
@@ -271,85 +189,6 @@ const testimonialSchema = z.object({
   role: z.string().trim().min(2).max(120),
   company: z.string().trim().max(120).optional().default(''),
   quote: z.string().trim().min(10).max(1500),
-  website: z.string().max(200).optional(),
-});
-
-const analyticsSchema = z.object({
-  path: z
-    .string()
-    .trim()
-    .min(1)
-    .max(300)
-    .refine((val) => val.startsWith('/') && !val.startsWith('//'))
-    .optional()
-    .default('/'),
-  referrer: z.string().trim().max(200).optional().default(''),
-  device: z.enum(['mobile', 'desktop']).optional().default('desktop'),
-});
-
-const projectPayloadSchema = z.object({
-  title: z.string().trim().min(1).max(140),
-  slug: slugSchema,
-  description: z.string().trim().min(1).max(1000),
-  long_description: z
-    .union([z.string().trim().max(10000), z.null(), z.undefined()])
-    .transform((v) => (v ? v : null)),
-  live_url: optionalHttpUrl,
-  github_url: optionalHttpUrl,
-  thumbnail_url: optionalImageUrl,
-  images: z
-    .array(
-      z
-        .string()
-        .trim()
-        .max(500)
-        .refine((v) => isSafeImageUrl(v)),
-    )
-    .max(12)
-    .optional()
-    .default([]),
-  tech_stack: z
-    .array(z.string().trim().min(1).max(60))
-    .max(20)
-    .optional()
-    .default([]),
-  category: z.string().trim().min(1).max(60).optional().default('Web'),
-  year: z.string().trim().min(1).max(30).optional().default('2026'),
-  featured: z.boolean().optional().default(false),
-  published: z.boolean().optional().default(true),
-  status_tag: z
-    .union([z.string().trim().max(80), z.null(), z.undefined()])
-    .transform((v) => (v ? v : null)),
-  role: z
-    .union([z.string().trim().max(120), z.null(), z.undefined()])
-    .transform((v) => (v ? v : null)),
-});
-
-const reorderSchema = z.object({
-  orderedIds: z
-    .array(z.string().trim().refine((id) => isUuid(id)))
-    .min(1)
-    .max(100),
-});
-
-const messageStatusSchema = z.object({
-  status: z.enum(['new', 'read', 'replied']),
-});
-
-const testimonialPatchSchema = z.object({
-  approved: z.boolean(),
-});
-
-const settingsPayloadSchema = z.object({
-  settings: z.object({
-    availability: z.object({
-      enabled: z.boolean(),
-      text: z.string().trim().min(1).max(120),
-    }),
-    hero: z.object({
-      headline: z.string().trim().min(1).max(240),
-    }),
-  }),
 });
 
 function escapeHtml(input: string): string {
@@ -357,25 +196,14 @@ function escapeHtml(input: string): string {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+    .replace(/"/g, '&quot;');
 }
+
+/* Route SEO metadata and JSON-LD builders live in src/lib/routeSeo.ts */
 
 async function startServer() {
   const app = express();
-  app.disable('x-powered-by');
-
-  const uploadJsonParser = express.json({limit: '7.5mb'});
-  const defaultJsonParser = express.json({limit: '64kb'});
-
-  // Route-scoped JSON body size limits
-  app.use((req, res, next) => {
-    if (req.path === '/api/admin/upload') {
-      uploadJsonParser(req, res, next);
-      return;
-    }
-    defaultJsonParser(req, res, next);
-  });
+  app.use(express.json({limit: '8mb'}));
 
   // Security headers
   app.use((_req, res, next) => {
@@ -392,7 +220,6 @@ async function startServer() {
   // PUBLIC API ROUTES
   // --------------------------------------------------------------------------
   app.get('/api/health', (_req, res) => {
-    res.setHeader('Cache-Control', 'no-store');
     res.json({
       ok: true,
       supabaseConnected: isSupabaseAdminReady && isSupabasePublicReady,
@@ -416,7 +243,7 @@ async function startServer() {
     if (supabaseAdmin) {
       const {data, error} = await supabaseAdmin
         .from('testimonials')
-        .select('id, name, role, company, quote, avatar_url, approved, created_at')
+        .select('*')
         .eq('approved', true)
         .order('created_at', {ascending: false});
       if (!error && Array.isArray(data)) {
@@ -430,7 +257,6 @@ async function startServer() {
   });
 
   app.post('/api/contact', async (req, res) => {
-    res.setHeader('Cache-Control', 'no-store');
     const parsed = contactBodySchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({error: 'Please check your form entries and try again.'});
@@ -447,19 +273,6 @@ async function startServer() {
     const oneHourAgo = Date.now() - 60 * 60 * 1000;
 
     // Rate limit: 3 submissions per hour per IP hash
-    const sharedAllowed = await checkRateLimit(supabaseAdmin, {
-      routeKey: 'contact',
-      identifierHash: ipHash,
-      maxRequests: 3,
-      windowMs: 60 * 60 * 1000,
-    });
-    if (!sharedAllowed) {
-      res.status(429).json({
-        error: `Rate limit reached (3 messages per hour). Please email ${siteContent.contact.email} directly.`,
-      });
-      return;
-    }
-
     if (supabaseAdmin) {
       const {count} = await supabaseAdmin
         .from('contact_messages')
@@ -473,17 +286,29 @@ async function startServer() {
         });
         return;
       }
+    } else {
+      const recent = (fallbackStore.messages || []).filter(
+        (m) => m.ip_hash === ipHash && new Date(m.created_at).getTime() >= oneHourAgo,
+      );
+      const memTimestamps = (rateLimitMap.get(ipHash) || []).filter(
+        (ts) => ts >= oneHourAgo,
+      );
+      if (recent.length >= 3 || memTimestamps.length >= 3) {
+        res.status(429).json({
+          error: `Rate limit reached (3 messages per hour). Please email ${siteContent.contact.email} directly.`,
+        });
+        return;
+      }
+      memTimestamps.push(Date.now());
+      rateLimitMap.set(ipHash, memTimestamps);
     }
-
-    const cleanName = sanitizeSingleLine(parsed.data.name);
-    const cleanSubject = sanitizeSingleLine(parsed.data.subject);
 
     let savedToDb = false;
     if (supabaseAdmin) {
       const {error} = await supabaseAdmin.from('contact_messages').insert({
-        name: cleanName,
+        name: parsed.data.name,
         email: parsed.data.email,
-        subject: cleanSubject,
+        subject: parsed.data.subject,
         message: parsed.data.message,
         ip_hash: ipHash,
         status: 'new',
@@ -492,9 +317,9 @@ async function startServer() {
     } else {
       fallbackStore.messages.unshift({
         id: crypto.randomUUID(),
-        name: cleanName,
+        name: parsed.data.name,
         email: parsed.data.email,
-        subject: cleanSubject,
+        subject: parsed.data.subject,
         message: parsed.data.message,
         ip_hash: ipHash,
         status: 'new',
@@ -509,12 +334,12 @@ async function startServer() {
           from: 'Ojas Awasthi Portfolio <onboarding@resend.dev>',
           to: ADMIN_EMAIL,
           replyTo: parsed.data.email,
-          subject: `[Portfolio Contact] ${cleanSubject}`,
-          text: `From: ${cleanName} (${parsed.data.email})\n\n${parsed.data.message}`,
+          subject: `[Portfolio Contact] ${parsed.data.subject}`,
+          text: `From: ${parsed.data.name} (${parsed.data.email})\n\n${parsed.data.message}`,
         });
         emailed = true;
-      } catch (err) {
-        console.error('[api/contact resend] Email error:', redactSecrets(err));
+      } catch {
+        // Keep response non-fatal if Resend domain isn't verified yet
       }
     }
 
@@ -545,32 +370,9 @@ async function startServer() {
   });
 
   app.post('/api/testimonials', async (req, res) => {
-    res.setHeader('Cache-Control', 'no-store');
     const parsed = testimonialSchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({error: 'Please fill out all required fields.'});
-      return;
-    }
-
-    if (parsed.data.website && parsed.data.website.trim().length > 0) {
-      res.json({
-        ok: true,
-        message: 'Thank you. Your testimonial has been queued for approval.',
-      });
-      return;
-    }
-
-    const ipHash = hashIp(getClientIp(req));
-    const allowed = await checkRateLimit(supabaseAdmin, {
-      routeKey: 'testimonials',
-      identifierHash: ipHash,
-      maxRequests: 3,
-      windowMs: 60 * 60 * 1000,
-    });
-    if (!allowed) {
-      res.status(429).json({
-        error: 'Too many submissions right now. Please try again later.',
-      });
       return;
     }
 
@@ -583,10 +385,6 @@ async function startServer() {
         approved: false,
       });
       if (error) {
-        console.error(
-          '[api/testimonials POST] Error:',
-          redactSecrets(error.message),
-        );
         res.status(500).json({error: 'Unable to submit testimonial.'});
         return;
       }
@@ -610,44 +408,27 @@ async function startServer() {
   });
 
   app.post('/api/analytics', async (req, res) => {
-    res.setHeader('Cache-Control', 'no-store');
-    const ipHash = hashIp(getClientIp(req));
-    const allowed = await checkRateLimit(supabaseAdmin, {
-      routeKey: 'analytics',
-      identifierHash: ipHash,
-      maxRequests: 60,
-      windowMs: 60 * 1000,
-    });
-    if (!allowed) {
-      res.status(429).json({error: 'Rate limit exceeded.'});
-      return;
-    }
-
-    const parsed = analyticsSchema.safeParse(req.body);
-    if (!parsed.success) {
-      res.status(400).json({error: 'Invalid analytics payload.'});
-      return;
-    }
-
-    const referrerStr = sanitizeSingleLine(parsed.data.referrer).slice(0, 200);
-    const countryStr = sanitizeSingleLine(
-      String(req.headers['x-vercel-ip-country'] || req.headers['cf-ipcountry'] || ''),
+    const pathStr = String(req.body?.path || '/').slice(0, 300);
+    const referrerStr = String(req.body?.referrer || '').slice(0, 200);
+    const deviceStr = req.body?.device === 'mobile' ? 'mobile' : 'desktop';
+    const countryStr = String(
+      req.headers['x-vercel-ip-country'] || req.headers['cf-ipcountry'] || '',
     ).slice(0, 10);
 
     if (supabaseAdmin) {
       await supabaseAdmin.from('page_views').insert({
-        path: parsed.data.path,
+        path: pathStr,
         referrer: referrerStr,
         country: countryStr,
-        device: parsed.data.device,
+        device: deviceStr,
       });
     } else {
       fallbackStore.pageViews.unshift({
         id: crypto.randomUUID(),
-        path: parsed.data.path,
+        path: pathStr,
         referrer: referrerStr,
         country: countryStr,
-        device: parsed.data.device,
+        device: deviceStr,
         created_at: new Date().toISOString(),
       });
       if (fallbackStore.pageViews.length > 500) {
@@ -667,415 +448,369 @@ async function startServer() {
   });
 
   // --------------------------------------------------------------------------
-  // ADMIN API ROUTES (Require verified Supabase Admin JWT)
+  // ADMIN API ROUTES
   // --------------------------------------------------------------------------
   app.get('/api/admin/projects', verifyAdmin, async (_req, res) => {
-    if (!supabaseAdmin) {
-      res.status(503).json({error: 'Service is temporarily unavailable.'});
+    if (supabaseAdmin) {
+      const {data, error} = await supabaseAdmin
+        .from('projects')
+        .select('*')
+        .order('sort_order', {ascending: true})
+        .order('created_at', {ascending: false});
+      if (error) {
+        res.status(500).json({error: error.message});
+        return;
+      }
+      res.json({projects: data || []});
       return;
     }
-    const {data, error} = await supabaseAdmin
-      .from('projects')
-      .select('*')
-      .order('sort_order', {ascending: true})
-      .order('created_at', {ascending: false});
-    if (error) {
-      console.error('[api/admin/projects GET] Error:', redactSecrets(error.message));
-      res.status(500).json({error: 'Unable to load projects.'});
-      return;
-    }
-    res.json({projects: data || []});
+    res.json({
+      projects: [...fallbackStore.projects].sort(
+        (a, b) => a.sort_order - b.sort_order,
+      ),
+    });
   });
 
   app.post('/api/admin/projects', verifyAdmin, async (req, res) => {
-    if (!supabaseAdmin) {
-      res.status(503).json({error: 'Service is temporarily unavailable.'});
-      return;
-    }
-    const parsed = projectPayloadSchema.safeParse(req.body);
-    if (!parsed.success) {
-      res.status(400).json({
-        error: 'Please check the project details (valid slug and http/https URLs required).',
-      });
+    const body = req.body;
+    if (!body?.title || !body?.description) {
+      res.status(400).json({error: 'Title and description are required.'});
       return;
     }
 
-    const {data, error} = await supabaseAdmin
-      .from('projects')
-      .insert({
-        title: parsed.data.title,
-        slug: parsed.data.slug,
-        description: parsed.data.description,
-        long_description: parsed.data.long_description,
-        live_url: parsed.data.live_url,
-        github_url: parsed.data.github_url,
-        thumbnail_url: parsed.data.thumbnail_url,
-        images: parsed.data.images,
-        tech_stack: parsed.data.tech_stack,
-        category: parsed.data.category,
-        year: parsed.data.year,
-        featured: parsed.data.featured,
-        published: parsed.data.published,
-        sort_order: 0,
-      })
-      .select()
-      .single();
-    if (error) {
-      console.error('[api/admin/projects POST] Error:', redactSecrets(error.message));
-      res.status(400).json({error: 'Unable to create project.'});
+    if (supabaseAdmin) {
+      const {data, error} = await supabaseAdmin
+        .from('projects')
+        .insert({
+          title: body.title,
+          slug: body.slug,
+          description: body.description,
+          long_description: body.long_description || null,
+          live_url: body.live_url || null,
+          github_url: body.github_url || null,
+          thumbnail_url: body.thumbnail_url || null,
+          images: Array.isArray(body.images) ? body.images : [],
+          tech_stack: Array.isArray(body.tech_stack) ? body.tech_stack : [],
+          category: body.category || 'Web',
+          year: body.year || '2026',
+          featured: Boolean(body.featured),
+          published: body.published !== false,
+          sort_order: 0,
+        })
+        .select()
+        .single();
+      if (error) {
+        res.status(400).json({error: error.message});
+        return;
+      }
+      res.json({project: data});
       return;
     }
-    res.json({project: data});
+
+    const created: Project = {
+      id: crypto.randomUUID(),
+      title: body.title,
+      slug: body.slug,
+      description: body.description,
+      long_description: body.long_description || null,
+      live_url: body.live_url || null,
+      github_url: body.github_url || null,
+      thumbnail_url: body.thumbnail_url || null,
+      images: [],
+      tech_stack: Array.isArray(body.tech_stack) ? body.tech_stack : [],
+      category: body.category || 'Web',
+      year: body.year || '2026',
+      featured: Boolean(body.featured),
+      sort_order: fallbackStore.projects.length + 1,
+      published: body.published !== false,
+      created_at: new Date().toISOString(),
+      status_tag: body.status_tag || null,
+      role: body.role || null,
+    };
+    fallbackStore.projects.push(created);
+    res.json({project: created});
   });
 
   app.patch('/api/admin/projects/:id', verifyAdmin, async (req, res) => {
-    if (!supabaseAdmin) {
-      res.status(503).json({error: 'Service is temporarily unavailable.'});
-      return;
-    }
     const {id} = req.params;
-    if (!isUuid(id)) {
-      res.status(400).json({error: 'Invalid project ID.'});
-      return;
-    }
-    const parsed = projectPayloadSchema.safeParse(req.body);
-    if (!parsed.success) {
-      res.status(400).json({
-        error: 'Please check the project details (valid slug and http/https URLs required).',
-      });
+    const body = req.body;
+    if (supabaseAdmin) {
+      const {data, error} = await supabaseAdmin
+        .from('projects')
+        .update({
+          title: body.title,
+          slug: body.slug,
+          description: body.description,
+          long_description: body.long_description || null,
+          live_url: body.live_url || null,
+          github_url: body.github_url || null,
+          thumbnail_url: body.thumbnail_url || null,
+          tech_stack: Array.isArray(body.tech_stack) ? body.tech_stack : [],
+          category: body.category || 'Web',
+          year: body.year || '2026',
+          featured: Boolean(body.featured),
+          published: body.published !== false,
+        })
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) {
+        res.status(400).json({error: error.message});
+        return;
+      }
+      res.json({project: data});
       return;
     }
 
-    const {data, error} = await supabaseAdmin
-      .from('projects')
-      .update({
-        title: parsed.data.title,
-        slug: parsed.data.slug,
-        description: parsed.data.description,
-        long_description: parsed.data.long_description,
-        live_url: parsed.data.live_url,
-        github_url: parsed.data.github_url,
-        thumbnail_url: parsed.data.thumbnail_url,
-        tech_stack: parsed.data.tech_stack,
-        category: parsed.data.category,
-        year: parsed.data.year,
-        featured: parsed.data.featured,
-        published: parsed.data.published,
-      })
-      .eq('id', id)
-      .select()
-      .single();
-    if (error) {
-      console.error('[api/admin/projects PATCH] Error:', redactSecrets(error.message));
-      res.status(400).json({error: 'Unable to update project.'});
-      return;
-    }
-    res.json({project: data});
+    fallbackStore.projects = fallbackStore.projects.map((p) =>
+      p.id === id ? {...p, ...body} : p,
+    );
+    res.json({ok: true});
   });
 
   app.delete('/api/admin/projects/:id', verifyAdmin, async (req, res) => {
-    if (!supabaseAdmin) {
-      res.status(503).json({error: 'Service is temporarily unavailable.'});
-      return;
-    }
     const {id} = req.params;
-    if (!isUuid(id)) {
-      res.status(400).json({error: 'Invalid project ID.'});
+    if (supabaseAdmin) {
+      const {error} = await supabaseAdmin.from('projects').delete().eq('id', id);
+      if (error) {
+        res.status(400).json({error: error.message});
+        return;
+      }
+      res.json({ok: true});
       return;
     }
-    const {error} = await supabaseAdmin.from('projects').delete().eq('id', id);
-    if (error) {
-      console.error('[api/admin/projects DELETE] Error:', redactSecrets(error.message));
-      res.status(400).json({error: 'Unable to delete project.'});
-      return;
-    }
+    fallbackStore.projects = fallbackStore.projects.filter((p) => p.id !== id);
     res.json({ok: true});
   });
 
   app.post('/api/admin/projects/reorder', verifyAdmin, async (req, res) => {
-    if (!supabaseAdmin) {
-      res.status(503).json({error: 'Service is temporarily unavailable.'});
+    const orderedIds: string[] = Array.isArray(req.body?.orderedIds)
+      ? req.body.orderedIds
+      : [];
+    if (supabaseAdmin) {
+      await Promise.all(
+        orderedIds.map((id, idx) =>
+          supabaseAdmin.from('projects').update({sort_order: idx + 1}).eq('id', id),
+        ),
+      );
+      res.json({ok: true});
       return;
     }
-    const parsed = reorderSchema.safeParse(req.body);
-    if (!parsed.success) {
-      res.status(400).json({error: 'Invalid project order payload.'});
-      return;
-    }
-    await Promise.all(
-      parsed.data.orderedIds.map((id, idx) =>
-        supabaseAdmin.from('projects').update({sort_order: idx + 1}).eq('id', id),
-      ),
-    );
+    orderedIds.forEach((id, idx) => {
+      const target = fallbackStore.projects.find((p) => p.id === id);
+      if (target) target.sort_order = idx + 1;
+    });
     res.json({ok: true});
   });
 
-  app.post('/api/admin/upload', verifyAdmin, async (req: AuthedRequest, res) => {
-    if (!supabaseAdmin) {
-      res.status(503).json({error: 'Service is temporarily unavailable.'});
+  app.post('/api/admin/upload', verifyAdmin, async (req, res) => {
+    const {fileName, mimeType, dataUrl} = req.body || {};
+    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'];
+    if (!allowed.includes(mimeType)) {
+      res.status(400).json({error: 'Only JPEG, PNG, WebP, or AVIF images are allowed.'});
       return;
     }
-    const ipHash = hashIp(getClientIp(req));
-    const uploadActor = hashIdentifier(
-      'admin-upload',
-      `${req.adminUserId || 'admin'}:${ipHash}`,
-    );
-    const uploadAllowed = await checkRateLimit(supabaseAdmin, {
-      routeKey: 'admin-upload',
-      identifierHash: uploadActor,
-      maxRequests: 15,
-      windowMs: 10 * 60 * 1000,
-    });
-    if (!uploadAllowed) {
-      res.status(429).json({
-        error: 'Too many uploads. Please wait a few minutes and try again.',
-      });
+    const base64Data = String(dataUrl || '').split(',')[1];
+    if (!base64Data) {
+      res.status(400).json({error: 'Invalid image payload.'});
+      return;
+    }
+    const buffer = Buffer.from(base64Data, 'base64');
+    if (buffer.byteLength > 5 * 1024 * 1024) {
+      res.status(400).json({error: 'Image exceeds 5 MB limit.'});
       return;
     }
 
-    const verified = validateAndDecodeImageUpload(req.body || {});
-    if (!verified.ok) {
-      res.status(400).json({error: verified.error});
+    if (supabaseAdmin) {
+      const safeName = `${Date.now()}-${String(fileName || 'image').replace(/[^a-zA-Z0-9._-]/g, '')}`;
+      const {error} = await supabaseAdmin.storage
+        .from('project-images')
+        .upload(safeName, buffer, {contentType: mimeType, upsert: false});
+      if (error) {
+        res.status(500).json({error: error.message});
+        return;
+      }
+      const {data: pub} = supabaseAdmin.storage
+        .from('project-images')
+        .getPublicUrl(safeName);
+      res.json({url: pub.publicUrl});
       return;
     }
 
-    const {error} = await supabaseAdmin.storage
-      .from('project-images')
-      .upload(verified.fileName, verified.buffer, {
-        contentType: verified.mimeType,
-        cacheControl: '31536000',
-        upsert: false,
-      });
-    if (error) {
-      console.error('[api/admin/upload] Error:', redactSecrets(error.message));
-      res.status(500).json({error: 'Unable to upload image right now.'});
-      return;
-    }
-    const {data: pub} = supabaseAdmin.storage
-      .from('project-images')
-      .getPublicUrl(verified.fileName);
-    res.json({url: pub.publicUrl});
+    // Preview mode returns the data URL directly so admins can preview overrides without Supabase Storage
+    res.json({url: dataUrl});
   });
 
   app.get('/api/admin/messages', verifyAdmin, async (_req, res) => {
-    if (!supabaseAdmin) {
-      res.status(503).json({error: 'Service is temporarily unavailable.'});
+    if (supabaseAdmin) {
+      const {data} = await supabaseAdmin
+        .from('contact_messages')
+        .select('*')
+        .order('created_at', {ascending: false});
+      res.json({messages: data || []});
       return;
     }
-    const {data, error} = await supabaseAdmin
-      .from('contact_messages')
-      .select('*')
-      .order('created_at', {ascending: false});
-    if (error) {
-      console.error('[api/admin/messages GET] Error:', redactSecrets(error.message));
-      res.status(500).json({error: 'Unable to load messages.'});
-      return;
-    }
-    res.json({messages: data || []});
+    res.json({messages: fallbackStore.messages});
   });
 
   app.patch('/api/admin/messages/:id', verifyAdmin, async (req, res) => {
-    if (!supabaseAdmin) {
-      res.status(503).json({error: 'Service is temporarily unavailable.'});
-      return;
-    }
     const {id} = req.params;
-    if (!isUuid(id)) {
-      res.status(400).json({error: 'Invalid message ID.'});
+    const status = req.body?.status;
+    if (!['new', 'read', 'replied'].includes(status)) {
+      res.status(400).json({error: 'Invalid status'});
       return;
     }
-    const parsed = messageStatusSchema.safeParse(req.body);
-    if (!parsed.success) {
-      res.status(400).json({error: 'Invalid message status.'});
-      return;
-    }
-    const {error} = await supabaseAdmin
-      .from('contact_messages')
-      .update({status: parsed.data.status})
-      .eq('id', id);
-    if (error) {
-      console.error('[api/admin/messages PATCH] Error:', redactSecrets(error.message));
-      res.status(400).json({error: 'Unable to update message status.'});
-      return;
+    if (supabaseAdmin) {
+      await supabaseAdmin
+        .from('contact_messages')
+        .update({status})
+        .eq('id', id);
+    } else {
+      fallbackStore.messages = fallbackStore.messages.map((m) =>
+        m.id === id ? {...m, status} : m,
+      );
     }
     res.json({ok: true});
   });
 
   app.get('/api/admin/testimonials', verifyAdmin, async (_req, res) => {
-    if (!supabaseAdmin) {
-      res.status(503).json({error: 'Service is temporarily unavailable.'});
+    if (supabaseAdmin) {
+      const {data} = await supabaseAdmin
+        .from('testimonials')
+        .select('*')
+        .order('created_at', {ascending: false});
+      res.json({testimonials: data || []});
       return;
     }
-    const {data, error} = await supabaseAdmin
-      .from('testimonials')
-      .select('*')
-      .order('created_at', {ascending: false});
-    if (error) {
-      console.error('[api/admin/testimonials GET] Error:', redactSecrets(error.message));
-      res.status(500).json({error: 'Unable to load testimonials.'});
-      return;
-    }
-    res.json({testimonials: data || []});
+    res.json({testimonials: fallbackStore.testimonials});
   });
 
   app.patch('/api/admin/testimonials/:id', verifyAdmin, async (req, res) => {
-    if (!supabaseAdmin) {
-      res.status(503).json({error: 'Service is temporarily unavailable.'});
-      return;
-    }
     const {id} = req.params;
-    if (!isUuid(id)) {
-      res.status(400).json({error: 'Invalid testimonial ID.'});
-      return;
-    }
-    const parsed = testimonialPatchSchema.safeParse(req.body);
-    if (!parsed.success) {
-      res.status(400).json({error: 'Invalid testimonial update payload.'});
-      return;
-    }
-    const {error} = await supabaseAdmin
-      .from('testimonials')
-      .update({approved: parsed.data.approved})
-      .eq('id', id);
-    if (error) {
-      console.error('[api/admin/testimonials PATCH] Error:', redactSecrets(error.message));
-      res.status(400).json({error: 'Unable to update testimonial.'});
-      return;
+    const approved = Boolean(req.body?.approved);
+    if (supabaseAdmin) {
+      await supabaseAdmin
+        .from('testimonials')
+        .update({approved})
+        .eq('id', id);
+    } else {
+      fallbackStore.testimonials = fallbackStore.testimonials.map((t) =>
+        t.id === id ? {...t, approved} : t,
+      );
     }
     res.json({ok: true});
   });
 
   app.delete('/api/admin/testimonials/:id', verifyAdmin, async (req, res) => {
-    if (!supabaseAdmin) {
-      res.status(503).json({error: 'Service is temporarily unavailable.'});
-      return;
-    }
     const {id} = req.params;
-    if (!isUuid(id)) {
-      res.status(400).json({error: 'Invalid testimonial ID.'});
-      return;
-    }
-    const {error} = await supabaseAdmin.from('testimonials').delete().eq('id', id);
-    if (error) {
-      console.error('[api/admin/testimonials DELETE] Error:', redactSecrets(error.message));
-      res.status(400).json({error: 'Unable to delete testimonial.'});
-      return;
+    if (supabaseAdmin) {
+      await supabaseAdmin.from('testimonials').delete().eq('id', id);
+    } else {
+      fallbackStore.testimonials = fallbackStore.testimonials.filter(
+        (t) => t.id !== id,
+      );
     }
     res.json({ok: true});
   });
 
   app.get('/api/admin/analytics', verifyAdmin, async (_req, res) => {
-    if (!supabaseAdmin) {
-      res.status(503).json({error: 'Service is temporarily unavailable.'});
+    if (supabaseAdmin) {
+      const sevenDaysAgo = new Date(
+        Date.now() - 7 * 24 * 60 * 60 * 1000,
+      ).toISOString();
+      const {data} = await supabaseAdmin
+        .from('page_views')
+        .select('*')
+        .gte('created_at', sevenDaysAgo)
+        .order('created_at', {ascending: false});
+      res.json({views: data || []});
       return;
     }
-    const sevenDaysAgo = new Date(
-      Date.now() - 7 * 24 * 60 * 60 * 1000,
-    ).toISOString();
-    const {data, error} = await supabaseAdmin
-      .from('page_views')
-      .select('*')
-      .gte('created_at', sevenDaysAgo)
-      .order('created_at', {ascending: false});
-    if (error) {
-      console.error('[api/admin/analytics GET] Error:', redactSecrets(error.message));
-      res.status(500).json({error: 'Unable to load analytics.'});
-      return;
-    }
-    res.json({views: data || []});
+    res.json({views: fallbackStore.pageViews});
   });
 
   app.get('/api/admin/chat-logs', verifyAdmin, async (_req, res) => {
-    if (!supabaseAdmin) {
-      res.status(503).json({error: 'Service is temporarily unavailable.'});
-      return;
-    }
-    const {data, error} = await supabaseAdmin
-      .from('chat_logs')
-      .select('id, question, answer, ip_hash, created_at')
-      .order('created_at', {ascending: false})
-      .limit(200);
-    if (error) {
-      console.error('[api/admin/chat-logs GET] Error:', redactSecrets(error.message));
-      if (
-        error.code === '42P01' ||
-        error.message?.toLowerCase().includes('chat_logs')
-      ) {
-        res.json({logs: [], tableMissing: true});
+    if (supabaseAdmin) {
+      const {data, error} = await supabaseAdmin
+        .from('chat_logs')
+        .select('id, question, answer, ip_hash, created_at')
+        .order('created_at', {ascending: false})
+        .limit(200);
+      if (error) {
+        if (
+          error.code === '42P01' ||
+          error.message?.toLowerCase().includes('chat_logs')
+        ) {
+          res.json({logs: [], tableMissing: true});
+          return;
+        }
+        res.status(500).json({error: error.message});
         return;
       }
-      res.status(500).json({error: 'Unable to load chat logs.'});
+      res.json({logs: data || []});
       return;
     }
-    res.json({logs: data || []});
+    res.json({logs: fallbackStore.chatLogs});
   });
 
   app.get('/api/admin/newsletter', verifyAdmin, async (_req, res) => {
-    if (!supabaseAdmin) {
-      res.status(503).json({error: 'Service is temporarily unavailable.'});
+    if (supabaseAdmin) {
+      const {data, error} = await supabaseAdmin
+        .from('newsletter_subscribers')
+        .select('*')
+        .order('created_at', {ascending: false});
+      if (error) {
+        res.status(500).json({error: error.message});
+        return;
+      }
+      const subscribers = (data || []).map((row) => ({
+        id: String(row.id),
+        email: String(row.email || ''),
+        name: row.name ? String(row.name) : null,
+        source: row.source ? String(row.source) : 'website',
+        consent: Boolean(row.consent),
+        consent_text: row.consent_text ? String(row.consent_text) : null,
+        created_at: String(row.created_at || ''),
+      }));
+      res.json({subscribers});
       return;
     }
-    const {data, error} = await supabaseAdmin
-      .from('newsletter_subscribers')
-      .select('*')
-      .order('created_at', {ascending: false});
-    if (error) {
-      console.error('[api/admin/newsletter GET] Error:', redactSecrets(error.message));
-      res.status(500).json({error: 'Unable to load subscribers.'});
-      return;
-    }
-    const subscribers = (data || []).map((row) => ({
-      id: String(row.id),
-      email: String(row.email || ''),
-      name: row.name ? String(row.name) : null,
-      source: row.source ? String(row.source) : 'website',
-      consent: Boolean(row.consent),
-      consent_text: row.consent_text ? String(row.consent_text) : null,
-      created_at: String(row.created_at || ''),
-    }));
-    res.json({subscribers});
+    res.json({subscribers: fallbackStore.subscribers});
   });
 
   app.delete('/api/admin/newsletter/:id', verifyAdmin, async (req, res) => {
-    if (!supabaseAdmin) {
-      res.status(503).json({error: 'Service is temporarily unavailable.'});
-      return;
-    }
     const {id} = req.params;
-    if (!isUuid(id)) {
-      res.status(400).json({error: 'Invalid subscriber ID.'});
+    if (supabaseAdmin) {
+      const {error} = await supabaseAdmin
+        .from('newsletter_subscribers')
+        .delete()
+        .eq('id', id);
+      if (error) {
+        res.status(400).json({error: error.message});
+        return;
+      }
+      res.json({ok: true});
       return;
     }
-    const {error} = await supabaseAdmin
-      .from('newsletter_subscribers')
-      .delete()
-      .eq('id', id);
-    if (error) {
-      console.error('[api/admin/newsletter DELETE] Error:', redactSecrets(error.message));
-      res.status(400).json({error: 'Unable to delete subscriber.'});
-      return;
-    }
+    fallbackStore.subscribers = fallbackStore.subscribers.filter(
+      (s) => s.id !== id,
+    );
     res.json({ok: true});
   });
 
   app.put('/api/admin/settings', verifyAdmin, async (req, res) => {
-    if (!supabaseAdmin) {
-      res.status(503).json({error: 'Service is temporarily unavailable.'});
+    const nextSettings = req.body?.settings as SiteSettingsMap | undefined;
+    if (!nextSettings) {
+      res.status(400).json({error: 'Settings payload missing'});
       return;
     }
-    const parsed = settingsPayloadSchema.safeParse(req.body);
-    if (!parsed.success) {
-      res.status(400).json({error: 'Invalid settings payload.'});
-      return;
-    }
-    const {error} = await supabaseAdmin.from('site_settings').upsert([
-      {key: 'availability', value: parsed.data.settings.availability},
-      {key: 'hero', value: parsed.data.settings.hero},
-    ]);
-    if (error) {
-      console.error('[api/admin/settings PUT] Error:', redactSecrets(error.message));
-      res.status(400).json({error: 'Unable to update settings.'});
-      return;
+    if (supabaseAdmin) {
+      await supabaseAdmin.from('site_settings').upsert([
+        {key: 'availability', value: nextSettings.availability},
+        {key: 'hero', value: nextSettings.hero},
+      ]);
+    } else {
+      fallbackStore.settings = nextSettings;
     }
     res.json({ok: true});
   });
@@ -1186,10 +921,9 @@ async function startServer() {
       }),
       ...projects.map((p) => {
         const parsed = p.created_at ? new Date(p.created_at) : new Date(nowIso);
-        const imgs =
-          p.thumbnail_url && isSafeHttpUrl(p.thumbnail_url)
-            ? [{loc: p.thumbnail_url, title: `${p.title} by Ojas Awasthi`}]
-            : undefined;
+        const imgs = p.thumbnail_url
+          ? [{loc: p.thumbnail_url, title: `${p.title} by Ojas Awasthi`}]
+          : undefined;
         return {
           loc: `/work/${p.slug}`,
           lastmod: Number.isNaN(parsed.getTime()) ? nowIso : parsed.toISOString(),
@@ -1258,10 +992,7 @@ ${entries
         const seo = buildPageSeoData(url, baseUrl, projects);
         const injected = injectSeoIntoHtml(transformed, seo);
 
-        res
-          .status(seo.statusCode)
-          .set({'Content-Type': 'text/html; charset=utf-8'})
-          .end(injected);
+        res.status(seo.statusCode).set({'Content-Type': 'text/html; charset=utf-8'}).end(injected);
       } catch (err) {
         vite.ssrFixStacktrace(err as Error);
         next(err);
@@ -1277,40 +1008,9 @@ ${entries
       const projects = await getPublishedProjects();
       const seo = buildPageSeoData(req.originalUrl, baseUrl, projects);
       const injected = injectSeoIntoHtml(rawHtml, seo);
-      res
-        .status(seo.statusCode)
-        .set({'Content-Type': 'text/html; charset=utf-8'})
-        .end(injected);
+      res.status(seo.statusCode).set({'Content-Type': 'text/html; charset=utf-8'}).end(injected);
     });
   }
-
-  // Global error handler — never leak HTML stack traces or raw internals
-  app.use(
-    (
-      err: Error & {status?: number; statusCode?: number; type?: string},
-      req: Request,
-      res: Response,
-      _next: NextFunction,
-    ) => {
-      console.error('[server] Unhandled error:', redactSecrets(err));
-      if (res.headersSent) return;
-
-      if (err.type === 'entity.too.large' || err.status === 413) {
-        res.status(413).json({error: 'Request payload is too large.'});
-        return;
-      }
-      if (err.type === 'entity.parse.failed' || err.status === 400) {
-        res.status(400).json({error: 'Invalid request format.'});
-        return;
-      }
-
-      if (req.path.startsWith('/api/')) {
-        res.status(500).json({error: 'Internal server error.'});
-        return;
-      }
-      res.status(500).type('text/plain').send('Internal server error.');
-    },
-  );
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server listening on http://localhost:${PORT}`);

@@ -192,10 +192,7 @@ export function buildProjectSchema(project: Project, baseUrl: string) {
     '@type': 'CreativeWork',
     name: project.title,
     description: project.description,
-    url:
-      project.live_url && /^https?:\/\//i.test(project.live_url.trim())
-        ? project.live_url.trim()
-        : `${baseUrl}/work/${project.slug}`,
+    url: project.live_url || `${baseUrl}/work/${project.slug}`,
     author: {
       '@type': 'Person',
       name: siteContent.profile.name,

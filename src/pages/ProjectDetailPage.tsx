@@ -3,12 +3,7 @@ import {ProjectThumbnail} from '../components/ProjectThumbnail';
 import {SeoHead} from '../components/SeoHead';
 import {useRouter} from '../context/RouterContext';
 import {buildPageSeoData} from '../lib/routeSeo';
-import {
-  extractDomain,
-  getProjectThumbnailUrl,
-  isSafeHttpUrl,
-  isSafeImageUrl,
-} from '../lib/screenshot';
+import {extractDomain, getProjectThumbnailUrl} from '../lib/screenshot';
 import {getCanonicalBaseUrl} from '../lib/seo';
 import type {Project} from '../types/database';
 
@@ -79,17 +74,9 @@ export function ProjectDetailPage({
     project.thumbnail_url,
     project.live_url,
   );
-  const safeLiveUrl =
-    project.live_url && isSafeHttpUrl(project.live_url)
-      ? project.live_url
-      : null;
-  const safeGithubUrl =
-    project.github_url && isSafeHttpUrl(project.github_url)
-      ? project.github_url
-      : null;
   const galleryImages =
     project.images && project.images.length > 0
-      ? project.images.filter((img) => isSafeImageUrl(img))
+      ? project.images
       : autoPreview
         ? [autoPreview]
         : [];
@@ -139,11 +126,11 @@ export function ProjectDetailPage({
               {project.description}
             </p>
 
-            {(safeLiveUrl || safeGithubUrl) && (
+            {(project.live_url || project.github_url) && (
               <div className="mt-8 flex flex-wrap gap-4">
-                {safeLiveUrl && (
+                {project.live_url && (
                   <a
-                    href={safeLiveUrl}
+                    href={project.live_url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="btn-primary group inline-flex items-center gap-2 px-6 py-3 text-sm font-medium"
@@ -156,9 +143,9 @@ export function ProjectDetailPage({
                   </a>
                 )}
 
-                {safeGithubUrl && (
+                {project.github_url && (
                   <a
-                    href={safeGithubUrl}
+                    href={project.github_url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="btn-secondary group inline-flex items-center gap-2 px-6 py-3 text-sm font-medium"

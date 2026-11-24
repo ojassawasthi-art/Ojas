@@ -1,7 +1,6 @@
 import {ChevronLeft, ChevronRight} from 'lucide-react';
 import {AnimatePresence, motion} from 'motion/react';
 import {useState} from 'react';
-import {isSafeImageUrl} from '../lib/screenshot';
 import type {Testimonial} from '../types/database';
 
 interface TestimonialsSectionProps {
@@ -81,7 +80,7 @@ export function TestimonialsSection({testimonials}: TestimonialsSectionProps) {
                 &ldquo;{current.quote}&rdquo;
               </p>
               <footer className="mt-8 flex items-center gap-4 border-t border-[var(--border)] pt-6">
-                {current.avatar_url && isSafeImageUrl(current.avatar_url) && (
+                {current.avatar_url && (
                   <img
                     src={current.avatar_url}
                     alt={current.name}
