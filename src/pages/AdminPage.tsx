@@ -41,9 +41,10 @@ export function AdminPage({onDataChanged}: AdminPageProps) {
   const [authChecking, setAuthChecking] = useState(true);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
-  const [loginEmail, setLoginEmail] = useState(ADMIN_EMAIL);
+  const [loginEmail, setLoginEmail] = useState('');
   const [loginStatus, setLoginStatus] = useState('');
   const [sendingLink, setSendingLink] = useState(false);
+  const [otpCooldown, setOtpCooldown] = useState(0);
 
   const [tab, setTab] = useState<AdminTab>('projects');
   const [projects, setProjects] = useState<Project[]>([]);
@@ -86,6 +87,14 @@ export function AdminPage({onDataChanged}: AdminPageProps) {
   const [savingProject, setSavingProject] = useState(false);
 
   useEffect(() => {
+    if (otpCooldown <= 0) return;
+    const timer = window.setInterval(() => {
+      setOtpCooldown((prev) => (prev <= 1 ? 0 : prev - 1));
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [otpCooldown]);
+
+  useEffect(() => {
     let active = true;
 
     async function checkSession() {
@@ -93,17 +102,24 @@ export function AdminPage({onDataChanged}: AdminPageProps) {
         const {data} = await supabase.auth.getSession();
         if (!active) return;
         const email = data.session?.user?.email || null;
-        if (email && email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+        const isAuthorized =
+          Boolean(email) &&
+          (!ADMIN_EMAIL || email!.toLowerCase() === ADMIN_EMAIL.toLowerCase());
+        if (isAuthorized && data.session?.access_token) {
           setUserEmail(email);
-          setAccessToken(data.session?.access_token || null);
+          setAccessToken(data.session.access_token);
         }
         setAuthChecking(false);
 
         const {data: sub} = supabase.auth.onAuthStateChange((_event, session) => {
           const nextEmail = session?.user?.email || null;
-          if (nextEmail && nextEmail.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+          const nextAuthorized =
+            Boolean(nextEmail) &&
+            (!ADMIN_EMAIL ||
+              nextEmail!.toLowerCase() === ADMIN_EMAIL.toLowerCase());
+          if (nextAuthorized && session?.access_token) {
             setUserEmail(nextEmail);
-            setAccessToken(session?.access_token || null);
+            setAccessToken(session.access_token);
           } else {
             setUserEmail(null);
             setAccessToken(null);
@@ -111,18 +127,6 @@ export function AdminPage({onDataChanged}: AdminPageProps) {
         });
         return () => sub.subscription.unsubscribe();
       } else {
-        try {
-          const previewEmail = sessionStorage.getItem('oa_admin_preview_email');
-          if (
-            previewEmail &&
-            previewEmail.toLowerCase() === ADMIN_EMAIL.toLowerCase()
-          ) {
-            setUserEmail(previewEmail);
-            setAccessToken('preview-mode');
-          }
-        } catch {
-          // Ignore
-        }
         setAuthChecking(false);
       }
     }
@@ -134,17 +138,16 @@ export function AdminPage({onDataChanged}: AdminPageProps) {
   }, []);
 
   const authHeaders = useCallback((): Record<string, string> => {
-    if (isSupabaseConfigured && accessToken) {
+    if (accessToken) {
       return {
         Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       };
     }
     return {
-      'x-admin-preview-email': userEmail || '',
       'Content-Type': 'application/json',
     };
-  }, [accessToken, userEmail]);
+  }, [accessToken]);
 
   const fetchAdminData = useCallback(async () => {
     if (!userEmail) return;
@@ -204,44 +207,54 @@ export function AdminPage({onDataChanged}: AdminPageProps) {
   const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginStatus('');
-    if (loginEmail.trim().toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
-      setLoginStatus(`Access is restricted to ${ADMIN_EMAIL}.`);
+    if (otpCooldown > 0) return;
+
+    const normalizedInput = loginEmail.trim().toLowerCase();
+    if (!normalizedInput) {
+      setLoginStatus('Please enter your email address.');
       return;
     }
 
-    if (isSupabaseConfigured && supabase) {
-      setSendingLink(true);
-      const {error} = await supabase.auth.signInWithOtp({
-        email: loginEmail.trim(),
-        options: {
-          emailRedirectTo: `${getCanonicalBaseUrl()}/admin`,
-        },
-      });
-      setSendingLink(false);
-      if (error) {
-        setLoginStatus(error.message);
-      } else {
-        setLoginStatus(`Magic link sent to ${loginEmail.trim()}. Check your inbox.`);
-      }
+    if (!isSupabaseConfigured || !supabase) {
+      setLoginStatus(
+        'Admin authentication is not configured in this environment.',
+      );
+      return;
+    }
+
+    // Avoid revealing whether a submitted address matches ADMIN_EMAIL
+    if (ADMIN_EMAIL && normalizedInput !== ADMIN_EMAIL.toLowerCase()) {
+      setOtpCooldown(60);
+      setLoginStatus(
+        'If this email is authorized, a sign-in link has been sent.',
+      );
+      return;
+    }
+
+    setSendingLink(true);
+    const {error} = await supabase.auth.signInWithOtp({
+      email: normalizedInput,
+      options: {
+        shouldCreateUser: false,
+        emailRedirectTo: `${getCanonicalBaseUrl()}/admin`,
+      },
+    });
+    setSendingLink(false);
+    setOtpCooldown(60);
+    if (error) {
+      setLoginStatus(
+        'Unable to send a sign-in link right now. Please wait a minute and try again.',
+      );
     } else {
-      try {
-        sessionStorage.setItem('oa_admin_preview_email', loginEmail.trim());
-      } catch {
-        // Ignore
-      }
-      setUserEmail(loginEmail.trim());
-      setAccessToken('preview-mode');
+      setLoginStatus(
+        'If this email is authorized, a sign-in link has been sent.',
+      );
     }
   };
 
   const handleSignOut = async () => {
     if (isSupabaseConfigured && supabase) {
       await supabase.auth.signOut();
-    }
-    try {
-      sessionStorage.removeItem('oa_admin_preview_email');
-    } catch {
-      // Ignore
     }
     setUserEmail(null);
     setAccessToken(null);
@@ -464,11 +477,13 @@ export function AdminPage({onDataChanged}: AdminPageProps) {
 
   const handleExportSubscribersCsv = () => {
     const escapeCsv = (val: string | boolean | null | undefined) => {
-      const str = val === null || val === undefined ? '' : String(val);
-      if (/[",\r\n]/.test(str)) {
-        return `"${str.replace(/"/g, '""')}"`;
+      const raw = val === null || val === undefined ? '' : String(val);
+      // Neutralize spreadsheet formula prefixes (=, +, -, @, tab, CR)
+      const safe = /^[=+\-@\t\r]/.test(raw) ? `'${raw}` : raw;
+      if (/[",\r\n]/.test(safe)) {
+        return `"${safe.replace(/"/g, '""')}"`;
       }
-      return str;
+      return safe;
     };
 
     const header = 'email,name,created_at,consent';
@@ -559,8 +574,8 @@ export function AdminPage({onDataChanged}: AdminPageProps) {
               </h1>
               <p className="mt-2 text-xs leading-relaxed text-[var(--muted)]">
                 {isSupabaseConfigured
-                  ? `Enter ${ADMIN_EMAIL} to receive a Supabase magic link.`
-                  : `Supabase environment variables are not connected yet. Enter ${ADMIN_EMAIL} to open local preview mode.`}
+                  ? 'Enter your authorized admin email to receive a one-time sign-in link.'
+                  : 'Supabase authentication must be configured before admin sign-in is available.'}
               </p>
 
               <form onSubmit={handleMagicLink} className="mt-6 space-y-4">
@@ -575,9 +590,12 @@ export function AdminPage({onDataChanged}: AdminPageProps) {
                     id="admin-email"
                     type="email"
                     required
+                    autoComplete="email"
+                    placeholder="you@example.com"
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
-                    className="mt-1.5 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-2.5 text-sm text-[var(--text)] focus:border-[var(--accent)] focus:outline-none"
+                    disabled={!isSupabaseConfigured}
+                    className="mt-1.5 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-2.5 text-sm text-[var(--text)] focus:border-[var(--accent)] focus:outline-none disabled:opacity-50"
                   />
                 </div>
 
@@ -589,14 +607,14 @@ export function AdminPage({onDataChanged}: AdminPageProps) {
 
                 <button
                   type="submit"
-                  disabled={sendingLink}
-                  className="btn-primary inline-flex w-full items-center justify-center gap-2 px-5 py-3 text-sm font-medium"
+                  disabled={sendingLink || !isSupabaseConfigured || otpCooldown > 0}
+                  className="btn-primary inline-flex w-full items-center justify-center gap-2 px-5 py-3 text-sm font-medium disabled:opacity-50"
                 >
                   {sendingLink && <Loader2 className="h-4 w-4 animate-spin" />}
                   <span>
-                    {isSupabaseConfigured
-                      ? 'Send magic link'
-                      : 'Open preview console'}
+                    {otpCooldown > 0
+                      ? `Wait ${otpCooldown}s to retry`
+                      : 'Send magic link'}
                   </span>
                 </button>
               </form>
@@ -615,8 +633,7 @@ export function AdminPage({onDataChanged}: AdminPageProps) {
           <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--border)] pb-6">
             <div>
               <p className="text-xs text-[var(--accent-text)]">
-                Signed in as {userEmail}{' '}
-                {!isSupabaseConfigured && '(Local Preview Mode)'}
+                Signed in as {userEmail}
               </p>
               <h1 className="mt-1 font-serif-display text-4xl text-[var(--text)]">
                 Portfolio Admin

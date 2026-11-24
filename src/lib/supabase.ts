@@ -8,13 +8,11 @@ function normalizeSupabaseBaseUrl(rawUrl: string): string {
 }
 
 const supabaseUrl = normalizeSupabaseBaseUrl(
-  import.meta.env.VITE_SUPABASE_URL ||
-    'https://hdryciyvkhozomertslx.supabase.co',
+  import.meta.env.VITE_SUPABASE_URL || '',
 );
 
 const supabaseAnonKey = (
-  import.meta.env.VITE_SUPABASE_ANON_KEY ||
-  'sb_publishable_y2bqryW00-NO-JAnrOXKTw_Qa4pYP1H'
+  import.meta.env.VITE_SUPABASE_ANON_KEY || ''
 ).trim();
 
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
@@ -28,6 +26,4 @@ export const supabase: SupabaseClient | null = isSupabaseConfigured
     })
   : null;
 
-export const ADMIN_EMAIL = (
-  import.meta.env.VITE_ADMIN_EMAIL || 'ojassawasthi@gmail.com'
-).trim();
+export const ADMIN_EMAIL = (import.meta.env.VITE_ADMIN_EMAIL || '').trim();

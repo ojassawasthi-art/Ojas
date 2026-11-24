@@ -3,7 +3,12 @@ import {ProjectThumbnail} from '../components/ProjectThumbnail';
 import {SeoHead} from '../components/SeoHead';
 import {useRouter} from '../context/RouterContext';
 import {buildPageSeoData} from '../lib/routeSeo';
-import {extractDomain, getProjectThumbnailUrl} from '../lib/screenshot';
+import {
+  extractDomain,
+  getProjectThumbnailUrl,
+  isSafeHttpUrl,
+  isSafeImageUrl,
+} from '../lib/screenshot';
 import {getCanonicalBaseUrl} from '../lib/seo';
 import type {Project} from '../types/database';
 
@@ -74,9 +79,17 @@ export function ProjectDetailPage({
     project.thumbnail_url,
     project.live_url,
   );
+  const safeLiveUrl =
+    project.live_url && isSafeHttpUrl(project.live_url)
+      ? project.live_url
+      : null;
+  const safeGithubUrl =
+    project.github_url && isSafeHttpUrl(project.github_url)
+      ? project.github_url
+      : null;
   const galleryImages =
     project.images && project.images.length > 0
-      ? project.images
+      ? project.images.filter((img) => isSafeImageUrl(img))
       : autoPreview
         ? [autoPreview]
         : [];
@@ -126,11 +139,11 @@ export function ProjectDetailPage({
               {project.description}
             </p>
 
-            {(project.live_url || project.github_url) && (
+            {(safeLiveUrl || safeGithubUrl) && (
               <div className="mt-8 flex flex-wrap gap-4">
-                {project.live_url && (
+                {safeLiveUrl && (
                   <a
-                    href={project.live_url}
+                    href={safeLiveUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="btn-primary group inline-flex items-center gap-2 px-6 py-3 text-sm font-medium"
@@ -143,9 +156,9 @@ export function ProjectDetailPage({
                   </a>
                 )}
 
-                {project.github_url && (
+                {safeGithubUrl && (
                   <a
-                    href={project.github_url}
+                    href={safeGithubUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="btn-secondary group inline-flex items-center gap-2 px-6 py-3 text-sm font-medium"

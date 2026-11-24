@@ -8,9 +8,13 @@ import {
 } from './knowledge.js';
 import {siteData} from './site-data.js';
 import {
+  checkRateLimit,
   getClientIp,
   hashIp,
+  InvalidJsonError,
   parseJsonBody,
+  PayloadTooLargeError,
+  redactSecrets,
   sendJson,
   type ApiRequest,
   type ApiResponse,
@@ -277,7 +281,9 @@ export async function handleChatRequest(
 
     geminiModel = resolveGeminiModel(process.env.GEMINI_MODEL);
 
-    const body = await parseJsonBody<ChatRequestBody>(req);
+    const body = await parseJsonBody<ChatRequestBody>(req, {
+      maxBytes: 32 * 1024,
+    });
     if (typeof body.message !== 'string') {
       sendJson(res, 400, {
         error: 'Message must be a text string between 1 and 500 characters.',
@@ -303,6 +309,20 @@ export async function handleChatRequest(
     }
 
     const ipHash = hashIp(getClientIp(req));
+    const burstAllowed = await checkRateLimit(supabase, {
+      routeKey: 'chat-burst',
+      identifierHash: ipHash,
+      maxRequests: 4,
+      windowMs: 60 * 1000,
+    });
+    if (!burstAllowed) {
+      sendJson(res, 429, {
+        error:
+          'Please wait a moment before sending another message, or email ojassawasthi@gmail.com.',
+      });
+      return;
+    }
+
     const allowed = await checkAndRecordRateLimit(supabase, ipHash);
     if (!allowed) {
       sendJson(res, 429, {
@@ -394,9 +414,17 @@ export async function handleChatRequest(
 
     sendJson(res, 200, {reply});
   } catch (err) {
+    if (err instanceof PayloadTooLargeError) {
+      sendJson(res, 413, {error: 'Message payload is too large.'});
+      return;
+    }
+    if (err instanceof InvalidJsonError) {
+      sendJson(res, 400, {error: 'Invalid request format.'});
+      return;
+    }
     const detail = extractGeminiError(err);
     console.error(
-      `[api/chat] Gemini error (status=${detail.status}, model=${geminiModel}): ${detail.message}`,
+      `[api/chat] Gemini error (status=${detail.status}, model=${geminiModel}): ${redactSecrets(detail.message)}`,
     );
     sendJson(res, 500, {error: VISITOR_UNAVAILABLE_MESSAGE});
   }

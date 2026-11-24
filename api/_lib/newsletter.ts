@@ -2,7 +2,10 @@ import type {SupabaseClient} from '@supabase/supabase-js';
 import {
   getClientIp,
   hashIp,
+  InvalidJsonError,
   parseJsonBody,
+  PayloadTooLargeError,
+  redactSecrets,
   sendJson,
   type ApiRequest,
   type ApiResponse,
@@ -92,11 +95,13 @@ async function isRateLimited(
         return true;
       }
       if (error) {
-        // Non-fatal if ip_hash column has not been migrated yet
-        console.error('[api/newsletter] Rate limit check warning:', error.message);
+        console.error(
+          '[api/newsletter] Rate limit check warning:',
+          redactSecrets(error.message),
+        );
       }
     } catch (err) {
-      console.error('[api/newsletter] Rate limit exception:', err);
+      console.error('[api/newsletter] Rate limit exception:', redactSecrets(err));
     }
   }
 
@@ -114,7 +119,9 @@ export async function handleNewsletterSignup(
     res.setHeader('X-Robots-Tag', 'noindex');
     res.setHeader('Cache-Control', 'no-store');
 
-    const body = await parseJsonBody<NewsletterRequestBody>(req);
+    const body = await parseJsonBody<NewsletterRequestBody>(req, {
+      maxBytes: 16 * 1024,
+    });
 
     // Honeypot: silently succeed without saving if bots fill "website"
     if (typeof body.website === 'string' && body.website.trim().length > 0) {
@@ -193,22 +200,25 @@ export async function handleNewsletterSignup(
         return;
       }
 
-      sendJson(res, 500, {
-        error: `Missing required environment variable(s): ${missingVars.join(', ')}`,
-        missing: missingVars,
+      console.error(
+        '[api/newsletter] Supabase not configured. Missing:',
+        missingVars.join(', '),
+      );
+      sendJson(res, 503, {
+        error: 'Unable to subscribe right now. Please try again later.',
       });
       return;
     }
 
-    // Check case-insensitive duplicate without revealing existence
+    // Exact case-normalized duplicate check (avoids LIKE wildcards on _ or %)
     const {data: existing, error: lookupError} = await supabase
       .from('newsletter_subscribers')
       .select('id')
-      .ilike('email', normalizedEmail)
+      .eq('email', normalizedEmail)
       .limit(1);
 
     if (lookupError) {
-      console.error('[api/newsletter] Lookup error:', lookupError.message);
+      console.error('[api/newsletter] Lookup error:', redactSecrets(lookupError.message));
     } else if (Array.isArray(existing) && existing.length > 0) {
       sendJson(res, 200, {ok: true, message: SUCCESS_MESSAGE});
       return;
@@ -236,7 +246,7 @@ export async function handleNewsletterSignup(
         return;
       }
 
-      console.error('[api/newsletter] Insert error:', insertError.message);
+      console.error('[api/newsletter] Insert error:', redactSecrets(insertError.message));
       sendJson(res, 500, {
         error: 'Unable to subscribe right now. Please try again later.',
       });
@@ -245,7 +255,15 @@ export async function handleNewsletterSignup(
 
     sendJson(res, 200, {ok: true, message: SUCCESS_MESSAGE});
   } catch (err) {
-    console.error('[api/newsletter] Error:', err);
+    if (err instanceof PayloadTooLargeError) {
+      sendJson(res, 413, {error: 'Request payload is too large.'});
+      return;
+    }
+    if (err instanceof InvalidJsonError) {
+      sendJson(res, 400, {error: 'Invalid request format.'});
+      return;
+    }
+    console.error('[api/newsletter] Error:', redactSecrets(err));
     sendJson(res, 500, {
       error: 'Unable to subscribe right now. Please try again later.',
     });
